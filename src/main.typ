@@ -75,52 +75,94 @@
 === Лекция 7: Документные хранилища
 - MongoDB: sharding strategies, write concerns
 
-=== Лекция 8: In-memory БД
+=== Лекция 8:
+- Inverted indexes: Lucene (Elasticsearch, Solr)
+- Time-series: Prometheus architecture, downsampling
+- Object storage: MinIO
+
+=== Лекция 9:
+- Geospatial: Minimum Bounding Rectangles, R-Tree, QuadTree
+- Графовые БД: Список смежности, Матрица смежности, B-Tree для индексации
+
+=== Лекция 10: Векторные БД
+- Вектор как единица данных: эмбеддинги текста, изображений, аудио
+- Семантический поиск документов / Поиск похожих изображений
+- Inverted File Indexing
+- Hierarchical navigable small world
+
+=== Лекция 11: In-memory БД
 - DuckDB: встроенная аналитика и векторизованное выполнение запросов
 - Redis: структуры данных и модели персистентности
 
-=== Лекция 9: Специализированные хранилища
-- Inverted indexes: Lucene architecture (Elasticsearch, Solr)
-- Time-series: Prometheus architecture, downsampling
-- Graph БД: Neo4j Cypher, traversal optimization
-- Geospatial: QuadTree, R-Tree для location data
-- Object storage: MinIO, S3 consistency models
+== Модуль 4: Компоненты распределённых систем (Лекции 12-15)
+Модуль 4 показывает как компоненты распределённых систем решают фундаментальные проблемы консистентности, надёжности и производительности в масштабе.
 
-=== Лекция 10: Векторные БД
-- *От экспериментов к production*: Spotify Voyager (10x speedup), Pinterest (200B+ vectors)
-- Индексы для векторного поиска: HNSW vs IVF trade-offs
-- ANN (Approximate Nearest Neighbor): accuracy vs speed
-- Quantization для масштаба: binary (40x speedup), E4M3 8-bit
+=== Лекция 12: Основы распределенных систем
+Ключевой вызов распределённых систем заключается в необходимости согласования состояния при условиях неопределённости сетевых задержек, отказов узлов и асинхронности коммуникации.
 
-== Модуль 4: Компоненты распределённых систем (Лекции 13-14)
+- Теорема CAP и практические примеры компромиссов
+- Репликация
+    - Лидер-последователь (Leader-Follower)
+    - На основе кворума (quorum-based)
+- Консенсусные алгоритмы
+    - Raft
+    - Paxos
+- Окончательная консистентность (Eventual consistency) и идемпотентность операций
+- Двухфазный коммит (2PC, Two-Phase Commit)
 
-=== Лекция 13: Infrastructure компоненты
-- API Gateway: rate limiting, authentication
-- Load Balancer: L4 vs L7, health checks
-- Message Broker: Kafka vs RabbitMQ semantics
-- Distributed Queue: at-most-once vs at-least-once
-- Identity Provider: OAuth2, JWT validation
+=== Лекция 13:
+- Forward Proxy
+- Reverse Proxy
+    - Load Balancing
+        - Round-Robin
+        - Least Connections
+        - IP Hash
+- Rate Limiting
+  - Fixed Window
+  - Token Bucket
+  - Leaky Bucket
+  - Sliding Window Log / Counter
 
-=== Лекция 14: Observability и Data pipeline
-- Logging: structured logging, log aggregation (ELK stack)
-- Monitoring: Prometheus, Grafana, alerting strategies
-- Data Warehouse: Snowflake, BigQuery architecture
-- Orchestration: Kubernetes primitives (Pods, Services, Ingress)
-- Schedulers: Airflow DAGs, Dagster resources
 
-== Модуль 6: System Design (Лекции 15-17)
+=== Лекция 14:
+- Authentication / Authorization
+- Управление доступом
+  - На основе ролей (Role-Based Access Control, RBAC)
+  - На основе аттрибутов (Attribute-Based Access Control, ABAC)
+- Единый вход (Single Sign-On)
 
-=== Лекция 15: Методология system design
-- Estimation: DAU → QPS, storage, bandwidth
-- Capacity planning: growth projections, costs
-- Back-of-envelope calculations: масштаб миллионов пользователей
-- Trade-offs documentation: CAP theorem практика
+=== Лекция 15: Асинхронная коммуникация
+Асинхронная коммуникация через очереди сообщений и события.
 
-=== Лекции 16-17: Production system design workshops
-- Разбор 10 системных задач (см. ниже)
-- Интеграция векторных БД в каждый дизайн
-- Шардирование и партиционирование стратегии
-- Multi-node ID generation patterns
+- Event Bus и архитектура, ориентированная на события (Event Driven Architecture)
+- Publish-Subscribe vs Message Queue
+- Saga Pattern: распределённые транзакции без двухфазного коммита, компенсирующие действия при ошибках
+- Гарантии доставки сообщений: at-most-once (может потеряться), at-least-once (могут быть дубли), exactly-once (идеал, но дорого)
+
+=== Лекция 16:
+- Логгирование
+    - structured logging
+    - log aggregation
+    - ELK stack
+- Observatility & Monitoring
+    - Prometheus
+    - Grafana
+    - alerting
+- Оркестрация: Kubernetes primitives (Pods, Services, Ingress)
+- Планировщики задач
+    - Примитивы
+        - Direct Acyclic Graphs
+        - Queue / Worker Pool
+    - Конкретные примеры
+        - Celery
+        - Airflow
+        - Dagster
+
+(остановился тут, дальше сгенерено)
+
+== Модуль 5: System Design (Лекция 17)
+
+=== Лекции 17: разбор дизайна конкретной системы
 
 ---
 
