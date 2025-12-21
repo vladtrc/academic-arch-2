@@ -275,7 +275,7 @@ $ K_("prod") = 1 - K_("proxy") = 1 - P / N $
 
 *Пример непродуктивного pass-through слоя:*
 
-Рассмотрим излишний слой сервисов, который только делегирует вызовы к слою персистентности:
+Рассмотрим излишний слой сервисов, большинство компонентов которого только делегируют вызовы к слою персистентности:
 
 ```go
 // service/user_service.go - непродуктивный слой сервисов
@@ -284,6 +284,7 @@ package service
 import (
 	"example/domain"
 	"example/persistence"
+	"strings"
 )
 
 func GetUser(id int) (*domain.User, error) {
@@ -301,6 +302,21 @@ func DeleteUser(id int) error {
 func ListUsers() ([]*domain.User, error) {
 	return persistence.ListUsers()
 }
+
+func SearchUsersByName(query string) ([]*domain.User, error) {
+	users, err := persistence.ListUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*domain.User
+	for _, u := range users {
+		if strings.Contains(strings.ToLower(u.Name), strings.ToLower(query)) {
+			result = append(result, u)
+		}
+	}
+	return result, nil
+}
 ```
 
 Анализ слоя сервисов:
@@ -315,9 +331,10 @@ func ListUsers() ([]*domain.User, error) {
   [`SaveUser`], [`(*User) error`], [Нет — прямая делегация],
   [`DeleteUser`], [`(int) error`], [Нет — прямая делегация],
   [`ListUsers`], [`() ([]*User, error)`], [Нет — прямая делегация],
+  [`SearchUsersByName`], [`(string) ([]*User, error)`], [Да — фильтрация и поиск],
 )
 
-Продуктивность слоя: $K_("prod") = 1 - 4/4 = 0$ (0% — полностью непродуктивный слой)
+Продуктивность слоя: $K_("prod") = 1 - 4/5 = 0.2$ (20% — непродуктивный слой)
 
 Такой слой не добавляет архитектурной ценности и лишь усложняет кодовую базу, увеличивая количество уровней косвенности без предоставления дополнительной функциональности.
 
