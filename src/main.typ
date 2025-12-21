@@ -31,14 +31,22 @@
 // --- Данные глоссария ---
 #let glossary = (
   "api": ("API", "Application Programming Interface — программная абстракция, определяющая методы и протоколы взаимодействия между программными компонентами. Обеспечивает унифицированный доступ к функциональности системы посредством стандартизированных вызовов, скрывая детали внутренней реализации."),
+  "component": ("Компонент", "Единица вычисления либо хранения данных, имеющая явно определённый контракт взаимодействия (интерфейс) и набор зависимостей."),
   "idx": ("Индекс", "Вспомогательная структура данных в системах управления базами данных, предназначенная для оптимизации производительности операций поиска и извлечения информации. Организует упорядоченное представление данных для существенного сокращения времени доступа к записям."),
   "io": ("Ввод-вывод", "Input/Output — совокупность механизмов и протоколов обмена данными между вычислительной системой и внешними устройствами или другими системами. Включает операции получения данных из источников и передачи результатов обработки, представляя критически важный компонент архитектуры компьютерных систем."),
+  "layer": ("Слой", "Множество компонентов, объединённых общей ответственностью и уровнем абстракции, и участвующих в системе согласно установленным правилам межслойных зависимостей. Говорят что слой А зависит от слоя Б если хотя бы один компонент слоя А зависит от компонента слоя Б."),
 )
 
 // --- Вставка термина в тексте со ссылкой на определение ---
 #let term(name) = {
   let (abbr, def) = glossary.at(name)
   [#abbr#footnote[#def]]
+}
+
+// --- Вставка полного определения термина прямо в текст ---
+#let def(name) = {
+  let (abbr, definition) = glossary.at(name)
+  [*#abbr* — #definition]
 }
 
 // --- Печать глоссария ---
@@ -76,16 +84,180 @@
 == #new-module("Архитектурные основы")
 
 === #new-lecture("Введение. Принципы построения приложения")
+
+#def("component")
+
+Рассмотрим несколько примеров:
+
+==== 1. Компонент как класс (C++)
+
+```cpp
+#include <iostream>
+
+class NumberPrinter {
+public:
+    void print(int x) {
+        std::cout << x << std::endl;
+    }
+
+    void printRange(int from, int to) {
+        for (int i = from; i <= to; ++i) {
+            std::cout << i << std::endl;
+        }
+    }
+};
+```
+
+#table(
+  columns: (auto, 1fr),
+  stroke: none,
+  align: (right, left),
+  [*Единица вычисления:*], [форматирование и вывод чисел],
+  [*Интерфейс:*], [сигнатуры публичных методов],
+  [*Зависимость:*], [консоль ввода-вывода],
+  [*Форма реализации:*], [класс (ООП-модель)],
+)
+
+- Компонент как функция (Elixir)
+
+```elixir
+def send_message(host, port, message) do
+  {:ok, socket} = :gen_tcp.connect(host, port, [:binary, active: false])
+  :ok = :gen_tcp.send(socket, message)
+  :gen_tcp.close(socket)
+end
+```
+
+#table(
+  columns: (auto, 1fr),
+  stroke: none,
+  align: (right, left),
+  [*Единица вычисления:*], [передача сообщения],
+  [*Интерфейс:*], [сигнатура функции],
+  [*Зависимость:*], [сеть (TCP stack)],
+  [*Форма реализации:*], [функция (функциональная модель)],
+)
+
+- Компонент как функция (Go)
+
+```go
+func LoadUserNames(db *sql.DB) ([]string, error) {
+	rows, err := db.Query("SELECT name FROM users")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		result = append(result, name)
+	}
+	return result, nil
+}
+```
+
+#table(
+  columns: (auto, 1fr),
+  stroke: none,
+  align: (right, left),
+  [*Единица вычисления:*], [извлечение данных],
+  [*Интерфейс:*], [сигнатура функции],
+  [*Зависимость:*], [БД (SQL, соединение)],
+  [*Форма реализации:*], [функция (процедурная / Go-модель)],
+)
+
+==== Зависимости компонентов и слои
+
+#def("layer")
+
+Рассмотрим пример слоя персистентности, который сохраняет различные модели в CSV:
+
+```go
+// domain/models.go - слой моделей данных
+package domain
+
+type User    struct{ ID int; Name, Email string }
+type Item    struct{ ID int; Title string; Price float64 }
+type Storage struct{ ID int; Location string; Capacity int }
+```
+
+```go
+// persistence/csv_persistence.go - слой персистентности
+package persistence
+
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"example/domain"  // Явная зависимость от слоя моделей
+)
+
+func SaveUsersToCSV(users []domain.User, filename string) error {
+	lines := make([]string, 0, len(users))
+	for _, u := range users {
+		lines = append(lines, fmt.Sprintf("%d,%s,%s", u.ID, u.Name, u.Email))
+	}
+	return write(filename, lines)
+}
+
+func SaveItemsToCSV(items []domain.Item, filename string) error {
+	lines := make([]string, 0, len(items))
+	for _, i := range items {
+		lines = append(lines, fmt.Sprintf("%d,%s,%v", i.ID, i.Title, i.Price))
+	}
+	return write(filename, lines)
+}
+
+func SaveStoragesToCSV(storages []domain.Storage, filename string) error {
+	lines := make([]string, 0, len(storages))
+	for _, s := range storages {
+		lines = append(lines, fmt.Sprintf("%d,%s,%d", s.ID, s.Location, s.Capacity))
+	}
+	return write(filename, lines)
+}
+
+func write(filename string, lines []string) error {
+	return os.WriteFile(filename, []byte(strings.Join(lines, "\n")), 0644)
+}
+```
+
+Анализ слоёв:
+
+#table(
+  columns: (auto, auto, 1fr, 1fr),
+  stroke: 0.5pt,
+  align: (center, left, left, left),
+  [*Слой*], [*Компонент*], [*Контракт (интерфейс)*], [*Зависимости*],
+
+  table.cell(rowspan: 3)[`domain`],
+  [`User`], [`struct{ ID int; Name, Email string }`], [—],
+  [`Item`], [`struct{ ID int; Title string; Price float64 }`], [—],
+  [`Storage`], [`struct{ ID int; Location string; Capacity int }`], [—],
+
+  table.cell(rowspan: 4)[`persistence`],
+  [`SaveUsersToCSV`], [`([]domain.User, string) error`], [`domain.User`, ФС],
+  [`SaveItemsToCSV`], [`([]domain.Item, string) error`], [`domain.Item`, ФС],
+  [`SaveStoragesToCSV`], [`([]domain.Storage, string) error`], [`domain.Storage`, ФС],
+  [`write`], [`(string, []string) error`], [ФС],
+)
+
+Заметим:
+- *Слой моделей* (`domain`): три компонента-структуры без зависимостей
+- *Слой персистентности* (`persistence`): четыре компонента-функции, три из которых явно зависят от типов слоя моделей
+- Слой персистентности *зависит* от слоя моделей, но не наоборот
+
 ==== Оптимизация системы требует выбора критерия оптимизации
-- Компоненты ПО
-- Зависимости компонентов
-- Интерфейсы
-- Слои компонентов, зависимости слоев
 
 ==== Принципы SOLID
 ==== Dependency Injection
 ==== Clean Architecture
 
+#pagebreak()
 === #new-lecture("Альтернативные архитектурные паттерны")
 ==== Архитектура на основе фреймворка (Rails, Django)
 Фреймворк предполагает стандартную структуру папок, именование файлов и шаблоны проектирования (зачастую, MVC), что уменьшает количество принимаемых решений и ускоряет разработку.
