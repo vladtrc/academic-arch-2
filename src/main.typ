@@ -44,11 +44,40 @@
 )
 
 // --- Вставка термина в тексте со ссылкой на определение ---
-// Использование: #term("api") → API¹ (сноска с полным определением)
-// Когда использовать: при упоминании термина в тексте/списках
-#let term(name) = {
+// Первое использование: создаёт сноску
+// Повторное: показывает тот же номер сноски (кликабельный)
+#let term(name) = context {
   let (abbr, def) = glossary.at(name)
-  [#abbr#footnote[#def]]
+  let lbl = "term-use-" + name
+
+  // Все места, где аббревиатура была выведена с этим label
+  let uses = query(selector(label(lbl)))
+
+  // Если это самый ранний проход и query ещё пустой — ведём себя как "первое использование"
+  if uses.len() == 0 {
+    [#label(lbl)#abbr#footnote[#def]]
+  } else {
+    let first_loc = uses.first().location()
+
+    if here().location() == first_loc {
+      // Первое использование
+      [#label(lbl)#abbr#footnote[#def]]
+    } else {
+      // Повторное использование: выводим тот же номер, что у первой сноски
+      let fn_num = counter(footnote).at(first_loc).get().first()
+      [#label(lbl)#abbr#super[#link(first_loc)[#fn_num]]]
+    }
+  }
+}
+
+
+
+// --- Вставка только аббревиатуры без сноски ---
+// Использование: #abbr("api") → API (без сноски)
+// Когда использовать: когда нужно принудительно избежать сноски
+#let abbr(name) = {
+  let (abbr, def) = glossary.at(name)
+  abbr
 }
 
 // --- Вставка полного определения термина прямо в текст ---
