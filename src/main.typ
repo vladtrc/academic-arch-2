@@ -4165,10 +4165,1144 @@ def user_metrics(cleaned_events):
   [Современные data pipelines, ML],
 )
 
-== #new-module("System Design")
+== #new-module("Практические задания")
 
-=== #new-lecture("Разбор дизайна конкретной системы")
-==== Применение всех концепций на практике
+Теперь, когда мы изучили архитектурные паттерны, структуры хранения данных, методы поиска и операционные компоненты, пора применить знания на практике. Модуль содержит четыре комплексных практических задания, каждое из которых охватывает несколько лекций.
+
+*Цель практик:* научиться принимать архитектурные решения с обоснованием. В реальных проектах нет "правильного ответа" — есть компромиссы. Важно уметь объяснить *почему* вы выбрали PostgreSQL, а не MongoDB, *почему* используете REST, а не gRPC, *какие метрики* подтверждают, что система выдержит нагрузку.
+
+*Формат:*
+- Практики 1-4: задания (что нужно сделать)
+- Практики 2-4: примеры корректного выполнения
+- Практика 1 не имеет примера — студенты пишут код самостоятельно
+
+#pagebreak()
+=== Практика 1: Архитектура приложения
+
+*Охватывает:* Лекции 1-4 (компоненты, Clean Architecture, SOLID, протоколы взаимодействия)
+
+*Задание:*
+
+Реализуйте простое приложение для управления задачами (TODO-list) с использованием *Clean Architecture*:
+
+*Требования:*
+1. *Слои приложения:*
+   - *Domain layer* (entities, бизнес-логика): Task, User
+   - *Use cases* (сценарии): CreateTask, GetTasks, UpdateTask, DeleteTask
+   - *Interface adapters*: REST API контроллеры, репозитории
+   - *Infrastructure*: реализация репозиториев (in-memory или БД)
+
+2. *Dependency Injection:*
+   - Use cases не должны зависеть от конкретной реализации репозитория
+   - Используйте интерфейсы для абстракции зависимостей
+
+3. *Тестирование с mocks:*
+   - Напишите unit-тесты для use cases
+   - Используйте mock-реализации репозиториев
+   - Покрытие: минимум 80%
+
+4. *Выбор языка:* Go, Java, C\#, TypeScript (любой со статической типизацией)
+
+*Структура проекта (пример на Go):*
+```
+todo-app/
+├── domain/
+│   ├── task.go          // Entity: Task
+│   └── user.go          // Entity: User
+├── usecases/
+│   ├── create_task.go   // UseCase: CreateTask
+│   ├── get_tasks.go     // UseCase: GetTasks
+│   └── interfaces.go    // Интерфейсы: TaskRepository
+├── adapters/
+│   ├── api/
+│   │   └── rest_controller.go  // HTTP handlers
+│   └── repository/
+│       ├── in_memory.go         // In-memory реализация
+│       └── postgres.go          // PostgreSQL реализация (опционально)
+├── infrastructure/
+│   └── config.go
+└── main.go
+```
+
+*Часть 2: Выбор протоколов взаимодействия*
+
+Для вашего приложения выберите *один или несколько* протоколов и обоснуйте выбор:
+
+1. *REST API* (HTTP + JSON)
+   - Когда использовать: стандартный CRUD, публичное API
+   - Опишите эндпоинты: `GET /tasks`, `POST /tasks`, `PUT /tasks/:id`, `DELETE /tasks/:id`
+
+2. *gRPC* (Protocol Buffers + HTTP/2)
+   - Когда использовать: внутренние микросервисы, высокая производительность
+   - Опишите .proto файл с сервисами
+
+3. *GraphQL*
+   - Когда использовать: гибкие запросы от фронтенда, мобильные приложения
+   - Опишите schema (Query, Mutation)
+
+4. *WebSocket*
+   - Когда использовать: real-time обновления задач (при изменении задачи уведомить других пользователей)
+   - Опишите события: `task.created`, `task.updated`, `task.deleted`
+
+*Требования к части 2:*
+- Выберите протокол(ы) для вашего приложения
+- Обоснуйте выбор: почему этот протокол подходит для ваших use cases?
+- Опишите API (эндпоинты/методы/схему)
+- Если выбрали несколько — объясните, для каких операций какой протокол
+
+*Критерии оценки:*
+- ✅ Чёткое разделение слоёв (domain не зависит от infrastructure)
+- ✅ Use cases используют интерфейсы, а не конкретные реализации
+- ✅ Unit-тесты с mock-репозиториями
+- ✅ Код компилируется и запускается
+- ✅ README с инструкциями по запуску
+- ✅ Обоснованный выбор протокола(ов) с описанием API
+
+#pagebreak()
+=== Практика 2: OLTP система и расчёты нагрузки
+
+*Охватывает:* Лекции 5-9 (классификация нагрузки, LSM, B-tree, ACID, in-memory)
+
+*Задание:*
+
+Спроектируйте OLTP-систему для одного из сценариев (на выбор):
+
+1. *Интернет-магазин* (товары, корзина, заказы, пользователи, доставка)
+2. *Социальная сеть* (посты, лайки, комментарии, подписки, уведомления)
+3. *Сервис бронирования отелей* (отели, комнаты, бронирования, оплата, отзывы)
+4. *Банковское приложение* (счета, транзакции, переводы, история, платежи)
+5. *Сервис доставки еды* (рестораны, меню, заказы, курьеры, доставка)
+6. *Такси/каршеринг* (водители, поездки, тарифы, местоположение, платежи)
+7. *Онлайн-кинотеатр* (фильмы, подписки, просмотры, рекомендации, платежи)
+8. *Образовательная платформа* (курсы, лекции, студенты, прогресс, сертификаты)
+9. *Система управления проектами* (проекты, задачи, пользователи, комментарии, файлы)
+10. *Маркетплейс фриланса* (заказчики, исполнители, проекты, предложения, платежи)
+11. *Медицинская система* (пациенты, врачи, приемы, диагнозы, рецепты)
+12. *Система бронирования билетов* (события, места, билеты, заказы, возвраты)
+
+*Требования:*
+
+*Часть 1: Модель данных*
+- Опишите основные сущности (таблицы) и связи между ними
+- Укажите первичные ключи, индексы, foreign keys
+- Обоснуйте выбор типов данных
+
+*Часть 2: Выбор структуры хранения*
+- Для каждой таблицы выберите структуру: B-tree, LSM, in-memory (Redis)
+- Обоснуйте выбор на основе паттерна доступа (read-heavy vs write-heavy)
+- Укажите, какие индексы необходимы
+
+*Часть 3: Расчёт нагрузки*
+
+*Дано:*
+- Сервер: 120 ГБ RAM, 28 CPU cores, SSD 2 ТБ
+
+*Рассчитайте:*
+
+1. *Предположите средний сценарий пользователя:*
+   - Сколько действий совершает типичный пользователь в день?
+   - Примеры: просмотр товаров, добавление в корзину, создание заказа
+   - Обоснуйте выбор на основе специфики вашего приложения
+
+2. *Пропускную способность сервера (max RPS):*
+   - CPU limit: сколько запросов в секунду может обработать 28 ядер?
+     - Подсказка: ~10,000 простых запросов/сек на ядро
+   - I/O limit: сколько IOPS может обеспечить SSD для ваших запросов?
+     - Подсказка: типичный SSD ~100,000 IOPS, средний запрос 1-3 IOPS
+   - RAM limit: сколько данных поместится в кеш?
+     - Подсказка: PostgreSQL shared_buffers обычно 25% от RAM
+   - Формула: `max_RPS = min(cpu_limit, io_limit, ram_limit)`
+
+3. *Максимальный DAU (Daily Active Users):*
+   - На основе max RPS и среднего сценария пользователя
+   - Учтите пиковую нагрузку (коэффициент 3-5×)
+   - Формула: `max_DAU = (max_RPS × 24 × 3600) / (actions_per_user × peak_factor)`
+
+4. *Латентность типичных запросов:*
+   - Для каждого типа запроса оцените количество дисковых обращений
+   - Используйте характеристики из Лекции 5 (SSD random: ~100 мкс, seq: ~50 мкс)
+   - Учтите кеширование: какой % запросов попадёт в RAM?
+
+5. *Объём данных:*
+   - Рассчитайте размер одной записи для каждой таблицы
+   - Сколько данных генерируется в день при вашем max DAU?
+   - Рост за год
+   - Поместится ли в 2 ТБ SSD?
+   - Формула: `daily_data = DAU × (avg_new_records_per_user × avg_record_size)`
+
+6. *Узкие места и оптимизация:*
+   - Что является bottleneck: CPU, I/O или RAM?
+   - Предложите способы оптимизации (индексы, кеширование, шардинг)
+
+*Часть 4: Выбор СУБД*
+- Выберите БД: PostgreSQL, MySQL, Cassandra, Redis, или комбинацию
+- Обоснуйте выбор на основе:
+  - Требований к ACID
+  - Паттерна нагрузки (OLTP)
+  - Расчётов из части 3
+
+*Формат ответа:* документ (Markdown/PDF) с расчётами, схемой данных и обоснованиями.
+
+==== Пример выполнения — Интернет-магазин
+
+*Сценарий:* Интернет-магазин с товарами, корзиной, заказами
+
+*Часть 1: Модель данных*
+
+*Основные сущности:*
+
+```sql
+-- Пользователи
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Товары
+CREATE TABLE products (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    category_id INT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_products_category ON products(category_id);
+
+-- Корзина
+CREATE TABLE cart_items (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    product_id BIGINT REFERENCES products(id),
+    quantity INT NOT NULL,
+    added_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_cart_user ON cart_items(user_id);
+
+-- Заказы
+CREATE TABLE orders (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    total_amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL, -- pending, paid, shipped, delivered
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_orders_user ON orders(user_id);
+CREATE INDEX idx_orders_status ON orders(status);
+
+-- Позиции заказа
+CREATE TABLE order_items (
+    id BIGSERIAL PRIMARY KEY,
+    order_id BIGINT REFERENCES orders(id),
+    product_id BIGINT REFERENCES products(id),
+    quantity INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL -- цена на момент заказа
+);
+CREATE INDEX idx_order_items_order ON order_items(order_id);
+```
+
+*Часть 2: Выбор структуры хранения*
+
+#table(
+  columns: 3,
+  align: (left, left, left),
+  table.header(
+    [*Таблица*], [*Структура*], [*Обоснование*]
+  ),
+
+  [`users`],
+  [*B-tree* (PostgreSQL)],
+  [Read-heavy: частые авторизации (чтение по email), редкие регистрации. Нужен индекс по email для быстрого поиска.],
+
+  [`products`],
+  [*B-tree* (PostgreSQL)],
+  [Read-heavy: каталог просматривается часто, товары добавляются редко. Индекс по category_id для фильтрации.],
+
+  [`cart_items`],
+  [*Redis* (in-memory)],
+  [Write-heavy: пользователи часто добавляют/удаляют товары из корзины. Корзина временная (TTL 7 дней), не критична для персистентности.],
+
+  [`orders`],
+  [*B-tree* (PostgreSQL)],
+  [ACID-критично: заказы требуют транзакционности (оплата + списание товара). Read-moderate: история заказов.],
+
+  [`order_items`],
+  [*B-tree* (PostgreSQL)],
+  [Часть транзакции заказа, нужна связность с orders (foreign key).],
+)
+
+*Индексы:*
+- `users.email` (UNIQUE) — авторизация по email
+- `products.category_id` — фильтрация по категориям
+- `cart_items.user_id` — получение корзины пользователя
+- `orders.user_id` — история заказов пользователя
+- `orders.status` — фильтрация заказов по статусу (для админки)
+
+*Часть 3: Расчёт нагрузки*
+
+*Исходные данные:*
+- Сервер: 120 ГБ RAM, 28 CPU cores, SSD 2 ТБ
+- Средний сценарий пользователя в день:
+  - Просмотр 20 товаров (GET /products/:id)
+  - Добавление 3 товаров в корзину (POST /cart)
+  - Просмотр корзины 1 раз (GET /cart)
+  - 10% пользователей создают заказ (POST /orders)
+
+*1. Пропускная способность сервера (max RPS):*
+
+CPU limit:
+```
+- 28 cores, каждый может обработать ~10,000 простых запросов/сек
+- CPU_limit = 28 × 10,000 = 280,000 RPS
+```
+
+I/O limit (SSD):
+```
+- SSD: ~100,000 IOPS (random reads)
+- Средний запрос: 1-3 IOPS
+- IO_limit = 100,000 / 2 ≈ 50,000 RPS
+```
+
+RAM limit:
+```
+- 120 ГБ RAM
+- PostgreSQL shared_buffers: 30 ГБ (25% от RAM)
+- Working set (активные данные): ~500 МБ (популярные товары + индексы)
+- Легко помещается, кеш-хиты ~80%+
+```
+
+*Итоговая пропускная способность:*
+```
+max_RPS = min(280,000, 50,000) = 50,000 RPS
+```
+
+*2. Максимальный DAU (Daily Active Users):*
+
+Действий на пользователя в день:
+```
+20 + 3 + 1 + 0.1 = 24.1 действия/пользователь
+```
+
+С учётом пиковой нагрузки (коэффициент 4×):
+```
+Средний RPS нужен: max_RPS / peak_factor = 50,000 / 4 = 12,500 RPS
+
+max_DAU = (12,500 RPS × 24 × 3600) / 24.1
+        = 1,080,000,000 / 24.1
+        ≈ 44,813,000 пользователей в день
+```
+
+*Вывод:* Сервер может выдержать *~45 миллионов DAU*. Bottleneck — I/O (SSD IOPS).
+
+*3. Объём данных при max DAU:*
+
+Размер записей:
+```
+- users: ~300 байт (email, password_hash, name, timestamps)
+- products: ~500 байт (name, description, price, category)
+- orders: ~100 байт (user_id, total, status, timestamp)
+- order_items: ~50 байт (order_id, product_id, quantity, price)
+```
+
+При max DAU = 44.8M пользователей:
+```
+- Новые пользователи: 0.1% от DAU = 44,800/день × 300 байт = 13 МБ
+- Новые заказы: 10% от DAU = 4,480,000/день × 100 байт = 448 МБ
+- Позиции заказов: 4.48M заказов × 2 товара × 50 байт = 448 МБ
+- Товары: стабильно (каталог ~100,000 товаров × 500 байт = 50 МБ)
+
+Итого в день: ~909 МБ ≈ 1 ГБ новых данных
+```
+
+Рост за год:
+```
+1 ГБ/день × 365 = 365 ГБ в год
+```
+
+Вывод: данные легко помещаются в 2 ТБ SSD (хватит на 5+ лет). Bottleneck — не storage, а I/O throughput.
+
+*4. Латентность запросов:*
+
+Типичный запрос: `GET /products/:id`
+```
+1. Поиск по PRIMARY KEY в B-tree (products)
+   - Глубина дерева для 100,000 записей: log₁₀₀(100,000) ≈ 3 уровня
+   - Один уровень = 1 дисковое обращение (если не в кеше)
+   - Латентность без кеша: 3 × 100 мкс = 300 мкс
+
+2. С кешированием (PostgreSQL shared_buffers):
+   - Популярные товары в RAM (допустим, 80% запросов попадают в кеш)
+   - Латентность с кешем: 0.8 × 10 мкс + 0.2 × 300 мкс = 68 мкс
+```
+
+Запрос корзины: `GET /cart` (Redis)
+```
+- In-memory: ~1 мкс (команда Redis GET)
+```
+
+Создание заказа: `POST /orders` (транзакция)
+```
+1. BEGIN TRANSACTION
+2. INSERT INTO orders
+3. INSERT INTO order_items (2 товара)
+4. UPDATE products SET stock = stock - quantity (2 товара)
+5. COMMIT
+
+Всего: ~5 записей на диск
+- Без WAL (write-ahead log): 5 × 100 мкс = 500 мкс
+- С WAL (последовательная запись): ~150 мкс
+```
+
+*5. Узкие места и оптимизация:*
+
+*Bottleneck: I/O (SSD IOPS)*
+
+При пиковой нагрузке в 12,500 RPS используется:
+```
+- CPU: 12,500 / 280,000 = 4.5% загрузки
+- I/O: 12,500 / 50,000 = 25% загрузки  ← bottleneck
+- RAM: working set легко помещается
+```
+
+*Возможности оптимизации:*
+
+1. *Увеличить кеш-хиты (снизить I/O):*
+   - Увеличить shared_buffers до 50 ГБ
+   - Использовать Redis для кеширования популярных товаров
+   - Результат: снизить I/O на 50% → max DAU ~90M
+
+2. *Read Replicas для масштабирования чтения:*
+   - Чтение товаров/каталога → на replicas
+   - Запись заказов → на primary
+   - Результат: распределить I/O между серверами
+
+3. *Batch операции для заказов:*
+   - Группировать UPDATE products.stock
+   - Результат: снизить IOPS на транзакцию
+
+*Часть 4: Выбор СУБД*
+
+*Решение: PostgreSQL + Redis*
+
+*PostgreSQL* (для users, products, orders, order_items):
+- ✅ ACID необходим для заказов (транзакции оплаты)
+- ✅ B-tree индексы для быстрого поиска по email, category_id
+- ✅ Foreign keys для целостности данных
+- ✅ Mature ecosystem (pgAdmin, репликация, бэкапы)
+
+*Redis* (для cart_items):
+- ✅ In-memory: мгновенный доступ к корзине
+- ✅ TTL: автоматическое удаление старых корзин (7 дней)
+- ✅ Write-heavy: частые добавления/удаления товаров
+- ✅ Не критично для персистентности (можно восстановить)
+
+*Альтернативы отвергнуты:*
+- ❌ *MongoDB*: нет нужды в схемы-less документах, нужны JOIN'ы и транзакции
+- ❌ *Cassandra*: избыточна для 100k пользователей, сложнее в администрировании
+- ❌ *MySQL*: подошла бы, но PostgreSQL имеет лучшую поддержку JSON и расширений
+
+#pagebreak()
+=== Практика 3: Специализированные индексы и поиск
+
+*Охватывает:* Модуль 3, Лекции 10-13 (Inverted Index, векторный поиск, геопоиск)
+
+*Задание:*
+
+Для того же сценария, что вы выбрали в Практике 2, добавьте *три типа поиска*:
+
+*1. Полнотекстовый поиск (Inverted Index)*
+
+Реализуйте поиск по одному из:
+- Интернет-магазин: поиск товаров по названию и описанию
+- Социальная сеть: поиск постов по ключевым словам
+- Сервис бронирования: поиск отелей по названию и удобствам
+- Банк: поиск транзакций по описанию
+
+*Требования:*
+- Опишите структуру inverted index (term → list of documents)
+- Покажите пример запроса (AND/OR терминов)
+- Выберите решение: PostgreSQL full-text search, Elasticsearch, или custom
+- Обоснуйте выбор
+
+*2. Векторный поиск (Embeddings + ANN)*
+
+Реализуйте семантический поиск:
+- Интернет-магазин: "похожие товары" по описанию
+- Социальная сеть: рекомендации постов по интересам пользователя
+- Сервис бронирования: рекомендации отелей по предпочтениям
+- Банк: детекция подозрительных транзакций (аномалии)
+
+*Требования:*
+- Опишите, как создаются эмбеддинги (модель: BERT, sentence-transformers)
+- Выберите метрику близости: cosine similarity, L2, dot product
+- Выберите ANN-индекс: HNSW, LSH, IVF
+- Оцените размер индекса (число векторов × размерность × 4 байта)
+
+*3. Геопространственный поиск (только для магазина/бронирования/такси)*
+
+Если ваш сценарий подразумевает геоданные:
+- Интернет-магазин: поиск ближайших пунктов выдачи
+- Сервис бронирования: поиск отелей в радиусе 5 км
+
+*Требования:*
+- Выберите структуру: R-Tree, QuadTree, KD-Tree
+- Покажите пример запроса (range query, kNN)
+- Обоснуйте выбор
+
+*Формат ответа:* документ с описанием каждого типа поиска, примерами запросов и обоснованиями.
+
+==== Пример выполнения — Поиск в интернет-магазине
+
+*1. Полнотекстовый поиск товаров*
+
+*Задача:* пользователь вводит "беспроводные наушники bluetooth", нужно найти релевантные товары.
+
+*Решение: PostgreSQL Full-Text Search*
+
+Создание inverted index:
+```sql
+-- Добавляем tsvector колонку для поиска
+ALTER TABLE products ADD COLUMN search_vector tsvector;
+
+-- Создаём GIN индекс
+CREATE INDEX idx_products_search ON products USING GIN(search_vector);
+
+-- Заполняем search_vector (триггером при INSERT/UPDATE)
+UPDATE products SET search_vector =
+    to_tsvector('russian', name || ' ' || description);
+```
+
+Пример запроса:
+```sql
+SELECT id, name, ts_rank(search_vector, query) AS rank
+FROM products,
+     to_tsquery('russian', 'беспроводные & наушники & bluetooth') AS query
+WHERE search_vector @@ query
+ORDER BY rank DESC
+LIMIT 20;
+```
+
+*Как работает:*
+1. `to_tsvector` токенизирует текст → стемминг → вектор терминов
+   - "беспроводные наушники" → `'беспровод':1 'наушник':2`
+2. `to_tsquery` создаёт запрос с операторами AND (&), OR (|)
+3. GIN индекс: для каждого термина — список документов (posting list)
+4. `@@` оператор: пересечение posting lists для AND-запроса
+5. `ts_rank`: ранжирование по TF-IDF
+
+*Обоснование выбора PostgreSQL:*
+- ✅ Встроенная поддержка (не нужен отдельный сервис)
+- ✅ Достаточно для 100k товаров
+- ✅ Поддержка морфологии (русский, английский)
+- ❌ Elasticsearch был бы лучше для >1M товаров и сложного ранжирования
+
+*2. Векторный поиск похожих товаров*
+
+*Задача:* на странице товара показать "похожие товары" по описанию.
+
+*Решение: sentence-transformers + pgvector (PostgreSQL extension)*
+
+Создание эмбеддингов:
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
+
+# Для каждого товара создаём эмбеддинг
+for product in products:
+    text = f"{product.name} {product.description}"
+    embedding = model.encode(text)  # 768-мерный вектор
+    # Сохраняем в БД
+```
+
+Схема БД:
+```sql
+CREATE EXTENSION vector;
+
+ALTER TABLE products ADD COLUMN embedding vector(768);
+
+-- Создаём HNSW индекс для быстрого поиска
+CREATE INDEX ON products USING hnsw (embedding vector_cosine_ops);
+```
+
+Поиск похожих товаров:
+```sql
+SELECT id, name,
+       1 - (embedding <=> $1::vector) AS similarity
+FROM products
+WHERE id != $2  -- исключаем сам товар
+ORDER BY embedding <=> $1::vector  -- косинусное расстояние
+LIMIT 10;
+```
+
+*Метрики:*
+- Размерность: 768
+- Метрика: *cosine similarity* (через `vector_cosine_ops`)
+  - Обоснование: длина вектора не важна, важен только смысл описания
+- Индекс: *HNSW* (Hierarchical Navigable Small World)
+  - Recall ~95%, latency ~1-5 мс для 100k векторов
+
+*Оценка размера:*
+```
+100,000 товаров × 768 dim × 4 байта = 307 МБ
+HNSW индекс добавляет ~2× overhead = 614 МБ
+Итого: ~1 ГБ (легко помещается в RAM)
+```
+
+*Альтернативы:*
+- ❌ *LSH*: хуже recall (~80%), но быстрее. Не нужно для 100k векторов.
+- ❌ *Faiss* (Facebook AI Similarity Search): избыточно, pgvector достаточно
+
+*3. Геопоиск пунктов выдачи*
+
+*Задача:* найти ближайшие 5 пунктов выдачи к адресу пользователя.
+
+*Решение: PostGIS (R-Tree)*
+
+Схема:
+```sql
+CREATE EXTENSION postgis;
+
+CREATE TABLE pickup_points (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    address VARCHAR(255),
+    location GEOMETRY(Point, 4326)  -- WGS84 координаты
+);
+
+-- Создаём GIST индекс (R-Tree)
+CREATE INDEX idx_pickup_location ON pickup_points USING GIST(location);
+```
+
+kNN запрос (5 ближайших):
+```sql
+SELECT id, name, address,
+       ST_Distance(location, ST_MakePoint(37.6173, 55.7558)::geography) AS distance_meters
+FROM pickup_points
+ORDER BY location <-> ST_MakePoint(37.6173, 55.7558)::geometry  -- kNN оператор
+LIMIT 5;
+```
+
+Range query (все пункты в радиусе 5 км):
+```sql
+SELECT id, name, address
+FROM pickup_points
+WHERE ST_DWithin(
+    location::geography,
+    ST_MakePoint(37.6173, 55.7558)::geography,
+    5000  -- 5 км в метрах
+);
+```
+
+*Обоснование R-Tree:*
+- ✅ Оптимален для точек (пункты выдачи)
+- ✅ Поддержка kNN и range queries
+- ✅ Встроен в PostGIS
+
+*Альтернативы:*
+- ❌ *QuadTree*: хорош для равномерных данных (игры), но пункты выдачи кластеризуются в городах
+- ❌ *KD-Tree*: тоже подошёл бы, но R-Tree лучше для неравномерных данных
+
+#pagebreak()
+=== Практика 4: Операционные компоненты + OLAP
+
+*Охватывает:* Модуль 4, Лекции 14-16 + OLAP из Лекции 8
+
+*Задание:*
+
+Дополните вашу OLTP-систему из Практики 2 *операционными компонентами*:
+
+*Часть 1: Rate Limiting и Load Balancing*
+
+1. *Rate Limiting:*
+   - Выберите алгоритм: Token Bucket, Sliding Window Log, Sliding Window Counter
+   - Определите лимиты: для авторизованных и неавторизованных пользователей
+   - Обоснуйте выбор
+
+2. *Load Balancing:*
+   - Предположим, у вас 3 инстанса приложения
+   - Выберите алгоритм: Round Robin, Least Connections, IP Hash, Consistent Hashing
+   - Обоснуйте выбор
+
+*Часть 2: Security*
+
+1. *Аутентификация:*
+   - Выберите механизм: JWT, Session-based, OAuth 2.0
+   - Опишите flow (последовательность запросов)
+
+2. *Авторизация:*
+   - Выберите модель: RBAC, ABAC
+   - Определите роли/права для вашего сценария
+
+*Часть 3: Observability*
+
+1. *Метрики (Prometheus):*
+   - Определите 5-7 ключевых метрик для мониторинга
+   - Укажите тип: Counter, Gauge, Histogram, Summary
+   - Напишите примеры PromQL-запросов
+
+2. *Логирование:*
+   - Определите формат: structured JSON
+   - Какие поля включать (timestamp, level, user_id, trace_id, etc.)
+
+3. *Трассировка:*
+   - Опишите span для типичного запроса (например, создание заказа)
+
+*Часть 4: OLAP и аналитика*
+
+1. *Требования к аналитике:*
+   - Какие отчёты нужны? (например: топ-товары, динамика продаж, RFM-анализ клиентов)
+
+2. *ETL Pipeline:*
+   - Как передавать данные из OLTP (PostgreSQL) в OLAP (ClickHouse)?
+   - Выберите инструмент: Airflow, dbt, custom script
+   - Опишите schedule (real-time, hourly, daily?)
+
+3. *Расчёт объёма:*
+   - Сколько данных в день передаётся в OLAP?
+   - Формат: Parquet, CSV, JSON?
+   - Компрессия: gzip, zstd?
+
+*Формат ответа:* документ с архитектурной схемой и обоснованиями.
+
+==== Пример выполнения — Операционные компоненты магазина
+
+*Часть 1: Rate Limiting и Load Balancing*
+
+*1. Rate Limiting*
+
+*Алгоритм: Token Bucket*
+
+Лимиты:
+```
+- Неавторизованные пользователи: 10 req/min (защита от парсеров)
+- Авторизованные пользователи: 100 req/min
+- API для мобильного приложения: 200 req/min
+- Админы: без лимита
+```
+
+Конфигурация (nginx):
+```nginx
+http {
+    # Зона для rate limiting
+    limit_req_zone $binary_remote_addr zone=general:10m rate=10r/m;
+    limit_req_zone $user_id zone=authenticated:10m rate=100r/m;
+
+    server {
+        location /api/ {
+            # Неавторизованные
+            limit_req zone=general burst=20;
+
+            # Если есть токен — используем зону authenticated
+            if ($http_authorization) {
+                limit_req zone=authenticated burst=50;
+            }
+        }
+    }
+}
+```
+
+*Обоснование Token Bucket:*
+- ✅ Позволяет burst (всплески): пользователь может сделать 20 быстрых запросов, потом ограничение
+- ✅ Простая реализация в nginx/Redis
+- ❌ Sliding Window Log был бы точнее, но избыточен
+
+*2. Load Balancing*
+
+*Алгоритм: Least Connections*
+
+Конфигурация (nginx):
+```nginx
+upstream backend {
+    least_conn;  # выбирает сервер с наименьшим числом активных соединений
+
+    server app1.internal:3000;
+    server app2.internal:3000;
+    server app3.internal:3000;
+}
+
+server {
+    listen 80;
+    location / {
+        proxy_pass http://backend;
+    }
+}
+```
+
+*Обоснование:*
+- ✅ Запросы неравномерные: создание заказа (долгий) vs просмотр товара (быстрый)
+- ✅ Least Connections автоматически учитывает загруженность
+- ❌ Round Robin не учитывает нагрузку — может перегрузить один сервер
+- ❌ IP Hash не нужен (нет sticky sessions)
+
+*Часть 2: Security*
+
+*1. Аутентификация: JWT*
+
+*Flow:*
+```
+1. POST /auth/login {email, password}
+   → Сервер проверяет пароль
+   → Возвращает JWT: {user_id, roles, exp}
+
+2. Клиент сохраняет JWT (localStorage/cookie)
+
+3. Все последующие запросы:
+   GET /api/cart
+   Authorization: Bearer <JWT>
+
+4. Сервер проверяет подпись JWT (без обращения к БД!)
+```
+
+JWT structure:
+```json
+{
+  "header": {"alg": "HS256", "typ": "JWT"},
+  "payload": {
+    "user_id": 12345,
+    "email": "alice@example.com",
+    "roles": ["customer"],
+    "exp": 1704067200  // срок действия: 1 час
+  },
+  "signature": "..."
+}
+```
+
+*Обоснование:*
+- ✅ Stateless: не нужно хранить сессии в Redis/БД
+- ✅ Масштабируемость: любой инстанс может проверить JWT
+- ❌ Session-based требует централизованное хранилище (Redis)
+
+*2. Авторизация: RBAC*
+
+*Роли:*
+```
+- customer: может просматривать товары, управлять корзиной, создавать заказы
+- admin: может управлять товарами, просматривать все заказы
+- support: может просматривать заказы, менять статусы
+```
+
+*Права (permissions):*
+```go
+const (
+    ReadProducts    = "products:read"
+    WriteProducts   = "products:write"
+    ReadOrders      = "orders:read"
+    WriteOrders     = "orders:write"
+    ReadAllOrders   = "orders:read:all"  // свои vs все
+    UpdateOrderStatus = "orders:update:status"
+)
+
+var roles = map[string][]string{
+    "customer": {ReadProducts, WriteOrders, ReadOrders},
+    "admin":    {ReadProducts, WriteProducts, ReadAllOrders, UpdateOrderStatus},
+    "support":  {ReadProducts, ReadAllOrders, UpdateOrderStatus},
+}
+```
+
+Middleware для проверки:
+```go
+func RequirePermission(perm string) middleware {
+    return func(c *Context) {
+        userRoles := c.Get("roles")  // из JWT
+        if !hasPermission(userRoles, perm) {
+            c.AbortWithStatus(403)  // Forbidden
+        }
+    }
+}
+
+// Использование
+router.POST("/products", RequirePermission(WriteProducts), createProduct)
+router.GET("/orders", RequirePermission(ReadAllOrders), listAllOrders)
+```
+
+*Обоснование RBAC:*
+- ✅ Простая модель для типичного e-commerce
+- ✅ Роли статичны (customer, admin)
+- ❌ ABAC избыточен (не нужны динамические правила вроде "только в рабочее время")
+
+*Часть 3: Observability*
+
+*1. Метрики (Prometheus)*
+
+*Ключевые метрики:*
+
+```go
+import "github.com/prometheus/client_golang/prometheus"
+
+// 1. Counter: общее количество запросов
+var httpRequestsTotal = prometheus.NewCounterVec(
+    prometheus.CounterOpts{Name: "http_requests_total"},
+    []string{"method", "endpoint", "status"},
+)
+
+// 2. Histogram: латентность запросов
+var httpDuration = prometheus.NewHistogramVec(
+    prometheus.HistogramOpts{
+        Name: "http_request_duration_seconds",
+        Buckets: []float64{.001, .01, .1, 1, 10},  // 1ms, 10ms, 100ms, 1s, 10s
+    },
+    []string{"method", "endpoint"},
+)
+
+// 3. Gauge: активные соединения
+var activeConnections = prometheus.NewGauge(
+    prometheus.GaugeOpts{Name: "http_active_connections"},
+)
+
+// 4. Counter: заказы
+var ordersCreated = prometheus.NewCounter(
+    prometheus.CounterOpts{Name: "orders_created_total"},
+)
+
+// 5. Counter: ошибки БД
+var dbErrors = prometheus.NewCounterVec(
+    prometheus.CounterOpts{Name: "db_errors_total"},
+    []string{"operation"},  // select, insert, update
+)
+
+// 6. Histogram: размер корзины
+var cartSize = prometheus.NewHistogram(
+    prometheus.HistogramOpts{
+        Name: "cart_items_count",
+        Buckets: []float64{1, 3, 5, 10, 20},
+    },
+)
+
+// 7. Gauge: остаток товаров на складе
+var productStock = prometheus.NewGaugeVec(
+    prometheus.GaugeOpts{Name: "product_stock"},
+    []string{"product_id"},
+)
+```
+
+*PromQL запросы:*
+
+```promql
+# 1. RPS (запросов в секунду)
+rate(http_requests_total[1m])
+
+# 2. Error rate (процент 5xx ошибок)
+sum(rate(http_requests_total{status=~"5.."}[1m]))
+/
+sum(rate(http_requests_total[1m]))
+
+# 3. p95 латентность
+histogram_quantile(0.95,
+  rate(http_request_duration_seconds_bucket[5m])
+)
+
+# 4. Количество заказов за последний час
+increase(orders_created_total[1h])
+
+# 5. Топ медленных эндпоинтов
+topk(5,
+  histogram_quantile(0.99,
+    rate(http_request_duration_seconds_bucket[5m])
+  ) by (endpoint)
+)
+```
+
+*Grafana дашборд (панели):*
+- RPS по эндпоинтам (линейный график)
+- Error rate (линейный график с алертом > 1%)
+- Латентность p50/p95/p99 (линейный график)
+- Активные соединения (gauge)
+- Количество заказов за день (counter)
+
+*2. Логирование*
+
+*Формат: Structured JSON*
+
+```json
+{
+  "timestamp": "2025-01-02T14:30:15.123Z",
+  "level": "INFO",
+  "service": "ecommerce-api",
+  "trace_id": "a1b2c3d4-e5f6-7890",
+  "span_id": "f1e2d3c4",
+  "user_id": 12345,
+  "method": "POST",
+  "endpoint": "/api/orders",
+  "status": 201,
+  "duration_ms": 45,
+  "message": "Order created successfully",
+  "order_id": 98765
+}
+```
+
+Пример ошибки:
+```json
+{
+  "timestamp": "2025-01-02T14:32:10.456Z",
+  "level": "ERROR",
+  "service": "ecommerce-api",
+  "trace_id": "a1b2c3d4-e5f6-7890",
+  "span_id": "f1e2d3c4",
+  "user_id": 12345,
+  "method": "POST",
+  "endpoint": "/api/orders",
+  "error": "insufficient stock",
+  "product_id": 555,
+  "requested": 10,
+  "available": 3,
+  "message": "Failed to create order"
+}
+```
+
+*Преимущества:*
+- ✅ Легко фильтровать по полям (Elasticsearch, Loki)
+- ✅ Trace_id связывает логи одного запроса
+- ✅ Можно парсить и строить метрики
+
+*3. Distributed Tracing (OpenTelemetry + Jaeger)*
+
+*Span для создания заказа:*
+
+```
+Trace: "POST /api/orders" (trace_id: abc-def)
+├─ Span 1: "http.request" (45 мс total)
+│  ├─ Span 2: "validate_cart" (2 мс)
+│  │  └─ Span 3: "redis.get cart:12345" (0.5 мс)
+│  ├─ Span 4: "db.transaction.create_order" (40 мс)
+│  │  ├─ Span 5: "db.insert orders" (10 мс)
+│  │  ├─ Span 6: "db.insert order_items" (5 мс)
+│  │  └─ Span 7: "db.update products.stock" (15 мс)  ← медленный!
+│  └─ Span 8: "send_email_notification" (3 мс async)
+```
+
+*Вывод из трейса:* обновление stock занимает 15 мс (самая медленная операция). Возможная оптимизация: батчинг UPDATE или использовать Redis для быстрой проверки остатков.
+
+*Часть 4: OLAP и аналитика*
+
+*1. Требования к аналитике*
+
+Отчёты для бизнеса:
+- *Топ-товары* (самые продаваемые за день/неделю/месяц)
+- *Динамика продаж* (revenue по дням, сравнение с прошлым периодом)
+- *RFM-анализ клиентов* (Recency, Frequency, Monetary — сегментация)
+- *Конверсия корзины* (% пользователей, совершивших заказ)
+- *AOV* (Average Order Value — средний чек)
+
+*2. ETL Pipeline (Airflow)*
+
+*Архитектура:*
+```
+PostgreSQL (OLTP)
+    ↓ (каждый час)
+Airflow DAG: extract → transform → load
+    ↓
+ClickHouse (OLAP)
+```
+
+*Airflow DAG:*
+```python
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime, timedelta
+
+dag = DAG(
+    'oltp_to_olap_etl',
+    start_date=datetime(2025, 1, 1),
+    schedule_interval='@hourly',  # каждый час
+)
+
+def extract_orders():
+    # Читаем новые заказы из PostgreSQL
+    conn = psycopg2.connect("postgresql://...")
+    df = pd.read_sql("""
+        SELECT o.id, o.user_id, o.created_at, o.total_amount,
+               oi.product_id, oi.quantity, oi.price
+        FROM orders o
+        JOIN order_items oi ON oi.order_id = o.id
+        WHERE o.created_at >= NOW() - INTERVAL '1 hour'
+    """, conn)
+    df.to_parquet('/tmp/orders_hourly.parquet')
+
+def transform_data():
+    df = pd.read_parquet('/tmp/orders_hourly.parquet')
+    # Добавляем метаданные
+    df['extracted_at'] = datetime.now()
+    df.to_parquet('/tmp/orders_transformed.parquet')
+
+def load_to_clickhouse():
+    df = pd.read_parquet('/tmp/orders_transformed.parquet')
+    # Загружаем в ClickHouse
+    client = clickhouse_connect.get_client(host='clickhouse.internal')
+    client.insert_df('orders_fact', df)
+
+extract_task = PythonOperator(task_id='extract', python_callable=extract_orders, dag=dag)
+transform_task = PythonOperator(task_id='transform', python_callable=transform_data, dag=dag)
+load_task = PythonOperator(task_id='load', python_callable=load_to_clickhouse, dag=dag)
+
+extract_task >> transform_task >> load_task
+```
+
+*Schedule:*
+- *Hourly* для оперативных дашбордов (динамика продаж в реальном времени)
+- *Daily* для тяжёлых агрегаций (RFM-анализ)
+
+*3. Расчёт объёма*
+
+Данные в день:
+```
+10,000 заказов/день × 2 товара/заказ = 20,000 строк
+Размер строки: ~100 байт (order_id, user_id, product_id, quantity, price, timestamps)
+20,000 × 100 байт = 2 МБ/день
+```
+
+Формат: *Parquet*
+- ✅ Колоночный формат (оптимален для ClickHouse)
+- ✅ Встроенная компрессия (zstd)
+- ✅ Эффективно для батчинга (hourly loads)
+
+Компрессия:
+```
+2 МБ (raw) → ~0.5 МБ (Parquet + zstd)
+```
+
+Объём за год:
+```
+0.5 МБ/день × 365 = 182 МБ/год
+```
+
+ClickHouse схема:
+```sql
+CREATE TABLE orders_fact (
+    order_id UInt64,
+    user_id UInt64,
+    product_id UInt64,
+    quantity UInt16,
+    price Decimal(10, 2),
+    created_at DateTime,
+    extracted_at DateTime
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(created_at)  -- партиционирование по месяцам
+ORDER BY (user_id, created_at);  -- сортировка для быстрых запросов по user_id
+```
+
+Пример запроса (топ-товары):
+```sql
+SELECT
+    product_id,
+    SUM(quantity) AS total_sold,
+    SUM(quantity * price) AS revenue
+FROM orders_fact
+WHERE created_at >= today() - INTERVAL 7 DAY
+GROUP BY product_id
+ORDER BY revenue DESC
+LIMIT 10;
+```
+
+*Итого:*
+- OLTP → OLAP: hourly через Airflow
+- Формат: Parquet (колоночный + компрессия)
+- Объём: ~0.5 МБ/день → 182 МБ/год (легко масштабируется)
 
 // ============ КУРС 2: Распределённые системы обработки данных ============
 #let new-lecture = make-new-lecture(lecture-counter-2)
