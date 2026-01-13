@@ -4416,67 +4416,75 @@ app/
 
 ==== Введение
 
-В реальной разработке перед выбором архитектуры системы необходимо *количественно оценить*, справится ли планируемое железо с ожидаемой нагрузкой.
-В практике ознакомимся с *масштабированием от эталонных бенчмарков*.
+В реальной разработке необходимо *спроектировать схему данных* и *количественно оценить*, справится ли планируемое железо с ожидаемой нагрузкой. Для оценки производительности используется *масштабирование от эталонных бенчмарков*.
 
 *Ключевая идея:* мы не можем точно предсказать производительность системы, которая ещё не написана. Но мы можем:
-1. Найти *эталонный бенчмарк* для похожих операций
-2. *Нормализовать* наш запрос относительно эталона (посчитать, во сколько раз он сложнее)
-3. *Масштабировать* результат бенчмарка на наше железо
+1. *Спроектировать схему данных* для нашей системы
+2. *Найти результаты эталонных бенчмарков* для целевого железа
+3. *Нормализовать* наш запрос относительно эталона (посчитать, во сколько раз он сложнее)
+4. *Оценить capacity* — понять, хватит ли железа для требуемой нагрузки
 
-Этот метод даёт оценку порядка величины (±50%), чего достаточно для принятия архитектурных решений на ранних стадиях
+*Важно:* это *приблизительная оценка порядка величин*, а не попытка получить реалистичные числа. Цель — выработать инженерный подход к предварительной оценке нагрузки: понимать порядок величин и осознавать, что каждая дополнительная операция (SELECT/JOIN/UPDATE) увеличивает стоимость транзакции.
 
 ==== Цели практики
 
-1. *Находить релевантные тесты производительности* — искать академические и индустриальные источники производительности для вашего типа нагрузки
-2. *Нормализовать нагрузку* — количественно сравнивать ваш запрос с эталонным через подсчёт операций
-3. *Масштабировать производительность* — применять формулы масштабирования по числу ядер с учётом нелинейности
-4. *Проверять результаты* — использовать CPU-time анализ для того, чтобы убедиться что результаты не выходят за рамки здравого смысла
-5. *Оценивать capacity* — переводить RPS в DAU (Daily Active Users) с учётом паттернов использования
+1. *Использовать результаты известных бенчмарков* — получить baseline производительности на конкретном железе
+2. *Нормализовать нагрузку* — количественно сравнивать свой запрос с эталонным через подсчёт операций
+3. *Проверять результаты* — использовать CPU-time анализ как sanity check
+4. *Оценивать capacity* — переводить RPS в DAU с учётом паттернов использования
 
 ==== Требуемые результаты
 
 *Задача 1. Модель данных в выбранной СУБД*
 
-Выберите одну СУБД (PostgreSQL, MySQL, MongoDB, SQLite) и спроектируйте модель данных:
+Выберите СУБД (PostgreSQL, MySQL, MongoDB) и спроектируйте модель данных:
 - 4-6 таблиц/коллекций в формате SQL DDL или схеме NoSQL
 - Расчёт размера одной записи в байтах для основных сущностей
 - Оценка общего объёма данных при целевой нагрузке
 
 *Задача 2. Описание одного endpoint'а из первой практики*
 
-Выберите один write-heavy endpoint и детально опишите его:
-- Название и назначение endpoint'а (например: создание заказа, публикация поста)
-- Какие таблицы читаются/пишутся и для чего
+Выберите один write-heavy endpoint и детально опишите:
+- Название и назначение endpoint'а
+- Какие таблицы читаются/пишутся
 - SQL-код всех запросов внутри транзакции
-- Логика обработки данных
 
-*Задача 3. Расчёт максимального DAU при данном железе*
+*Задача 3. Поиск baseline производительности*
 
-  *Шаг 3.1. Нормализация нагрузки*
-  - Подсчёт базовых операций в вашем endpoint'е (SELECT, INSERT, UPDATE)
-  - Сравнение с эталонным endpoint'ом
-  - Вычисление коэффициента сложности: K = (ваши операции) / (эталонные операции)
+Найдите опубликованные результаты бенчмарков для конфигурации, близкой к вашему целевому железу:
 
-  *Шаг 3.2. Расчёт максимального RPS*
-  - Выбор baseline TPS из академических источников
-  - Применение формулы масштабирования на 28 cores
-  - Расчёт max RPS = baseline TPS / K
+- *Официальные источники:* TPC-C/TPC-E результаты на #link("https://www.tpc.org/tpcc/results/tpcc_results5.asp")[tpc.org]
+- *Vendor benchmarks:* документация облачных провайдеров (AWS RDS, Azure, GCP Cloud SQL)
+- *Независимые тесты:* Percona, Benchmarksql, публикации на GitHub
 
-  *Шаг 3.3. Проверка через CPU-time*
-  - Обратный расчёт CPU-time на транзакцию из baseline
-  - Проверка, что при расчётном RPS утилизация CPU ≤ 100%
+Укажите источник, конфигурацию железа и полученный TPS — это ваш baseline.
 
-  *Шаг 3.4. Расчёт максимального DAU*
-  - Описание сценария использования (сколько действий делает один пользователь в день)
-  - Учёт активных часов и пикового коэффициента
-  - Формула: DAU = (RPS × активные_секунды) / (действий_на_юзера × пик)
+*Задача 4. Расчёт максимального RPS для вашего endpoint'а*
 
-*Проверка на здравый смысл*
+*Шаг 4.1. Нормализация нагрузки*
 
-- Является ли полученный результат разумным? (sanity check)
-- Какие факторы могут снизить производительность в реальности?
-- Согласуется ли результат с известными системами аналогичного масштаба?
+Подсчитайте DML-операции в вашем endpoint'е и сравните с эталоном:
+
+$ K = frac("DML в вашем endpoint", "DML в эталоне (pgbench = 5)") $
+
+*Шаг 4.2. Расчёт max RPS*
+
+$ "max RPS" = frac("baseline TPS", K) $
+
+*Шаг 4.3. Проверка через CPU-time*
+
+$ "CPU-time на транзакцию" = frac(N_"cores" times 1000 "мс", "TPS") $
+
+Проверьте: при расчётном RPS загрузка CPU не должна превышать 100%.
+
+*Задача 5. Расчёт DAU*
+
+$ "DAU" = frac("RPS" times "активные секунды", "действий на пользователя" times "пиковый коэффициент") $
+
+Параметры формулы определите самостоятельно исходя из вашего сценария:
+- Активные секунды: сколько часов в сутки система под нагрузкой
+- Действий на пользователя: сколько запросов генерирует один пользователь
+- Пиковый коэффициент: во сколько раз пиковая нагрузка выше средней
 
 ==== Пример выполнения
 
@@ -4487,263 +4495,176 @@ app/
 ```sql
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,           -- 8 байт
-    email VARCHAR(255) UNIQUE NOT NULL, -- ~30 байт (средняя длина email)
+    email VARCHAR(255) UNIQUE NOT NULL, -- ~30 байт
     password_hash CHAR(60) NOT NULL,    -- 60 байт (bcrypt)
     created_at TIMESTAMP                -- 8 байт
 );
--- Размер записи: 8 + 30 + 60 + 8 = 106 байт
--- PostgreSQL overhead (tuple header, alignment): ~24 байт
--- Итого: ~130 байт на пользователя
+-- Размер записи: ~130 байт (с учётом tuple header)
 
 CREATE TABLE products (
     id BIGSERIAL PRIMARY KEY,           -- 8 байт
-    name VARCHAR(255) NOT NULL,         -- ~40 байт (средняя длина названия)
-    description TEXT,                   -- ~200 байт (среднее описание)
+    name VARCHAR(255) NOT NULL,         -- ~40 байт
+    description TEXT,                   -- ~200 байт
     price DECIMAL(10,2) NOT NULL,       -- 8 байт
     stock INT NOT NULL,                 -- 4 байт
     category_id INT                     -- 4 байт
 );
--- Размер: 8 + 40 + 200 + 8 + 4 + 4 + 24 = ~288 байт на товар
+-- Размер: ~288 байт
 
 CREATE TABLE orders (
-    id BIGSERIAL PRIMARY KEY,           -- 8 байт
-    user_id BIGINT REFERENCES users(id),-- 8 байт
-    total DECIMAL(10,2) NOT NULL,       -- 8 байт
-    status VARCHAR(20),                 -- 20 байт
-    created_at TIMESTAMP                -- 8 байт
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    total DECIMAL(10,2) NOT NULL,
+    status VARCHAR(20),
+    created_at TIMESTAMP
 );
--- Размер: 8 + 8 + 8 + 20 + 8 + 24 = ~76 байт
+-- Размер: ~76 байт
 
 CREATE TABLE order_items (
-    id BIGSERIAL PRIMARY KEY,           -- 8 байт
-    order_id BIGINT REFERENCES orders(id),    -- 8 байт
-    product_id BIGINT REFERENCES products(id),-- 8 байт
-    quantity INT,                       -- 4 байт
-    price DECIMAL(10,2)                 -- 8 байт
+    id BIGSERIAL PRIMARY KEY,
+    order_id BIGINT REFERENCES orders(id),
+    product_id BIGINT REFERENCES products(id),
+    quantity INT,
+    price DECIMAL(10,2)
 );
--- Размер: 8 + 8 + 8 + 4 + 8 + 24 = ~60 байт
+-- Размер: ~60 байт
 
 CREATE TABLE cart_items (
-    user_id BIGINT REFERENCES users(id),      -- 8 байт
-    product_id BIGINT REFERENCES products(id),-- 8 байт
-    quantity INT,                             -- 4 байт
-    added_at TIMESTAMP,                       -- 8 байт
+    user_id BIGINT REFERENCES users(id),
+    product_id BIGINT REFERENCES products(id),
+    quantity INT,
+    added_at TIMESTAMP,
     PRIMARY KEY (user_id, product_id)
 );
--- Размер: 8 + 8 + 4 + 8 + 24 = ~52 байт
+-- Размер: ~52 байт
 ```
 
-*Оценка объёма данных:*
+*Оценка объёма:*
 - 1 млн пользователей × 130 байт = 130 МБ
-- 100K товаров × 288 байт = 28.8 МБ
+- 100K товаров × 288 байт = 29 МБ
 - 10 млн заказов × 76 байт = 760 МБ
-- 30 млн позиций в заказах × 60 байт = 1.8 ГБ
-- 100K активных корзин × 2 товара × 52 байт = 10.4 МБ
+- 30 млн позиций × 60 байт = 1.8 ГБ
 
-*Итого: ~2.7 ГБ данных* (без индексов; с индексами умножить на ~2-3)
+*Итого: ~2.7 ГБ* (без индексов)
 
 ===== Задача 2. Описание endpoint'а
 
 *Endpoint:* `POST /api/orders` — оформление заказа
 
 *Бизнес-логика:*
-1. Пользователь нажимает "Оформить заказ"
-2. Система читает товары из корзины пользователя
-3. Для каждого товара проверяет наличие на складе (stock)
-4. Создаёт запись заказа (orders)
-5. Создаёт позиции заказа (order_items) для каждого товара
-6. Уменьшает stock у всех товаров
-7. Очищает корзину пользователя
+1. Проверить наличие товаров на складе
+2. Создать заказ
+3. Создать позиции заказа
+4. Уменьшить stock
+5. Очистить корзину
 
-*Предположения для примера:*
-- В корзине 3 товара (типичный заказ)
-- Все товары есть на складе (happy path, без ошибок)
-
-*SQL-код транзакции:*
+*SQL-код транзакции (3 товара в корзине):*
 
 ```sql
 BEGIN;
 
--- 1. Читаем корзину пользователя (для простоты предположим, что мы уже знаем product_id)
--- В реальности был бы SELECT FROM cart_items WHERE user_id = $1
--- Результат: 3 строки с product_id и quantity
+SELECT id, stock FROM products WHERE id = $1;
+SELECT id, stock FROM products WHERE id = $2;
+SELECT id, stock FROM products WHERE id = $3;
 
--- 2. Проверяем stock для каждого товара
-SELECT id, stock FROM products WHERE id = $1; -- товар 1
-SELECT id, stock FROM products WHERE id = $2; -- товар 2
-SELECT id, stock FROM products WHERE id = $3; -- товар 3
-
--- 3. Создаём заказ
 INSERT INTO orders (user_id, total, status, created_at)
-VALUES ($1, $2, 'pending', CURRENT_TIMESTAMP)
-RETURNING id; -- получаем order_id
-
--- 4. Создаём позиции заказа
-INSERT INTO order_items (order_id, product_id, quantity, price)
-VALUES ($order_id, $product_id_1, $quantity_1, $price_1);
+VALUES ($1, $2, 'pending', CURRENT_TIMESTAMP) RETURNING id;
 
 INSERT INTO order_items (order_id, product_id, quantity, price)
-VALUES ($order_id, $product_id_2, $quantity_2, $price_2);
-
+VALUES ($order_id, $p1, $q1, $price1);
 INSERT INTO order_items (order_id, product_id, quantity, price)
-VALUES ($order_id, $product_id_3, $quantity_3, $price_3);
+VALUES ($order_id, $p2, $q2, $price2);
+INSERT INTO order_items (order_id, product_id, quantity, price)
+VALUES ($order_id, $p3, $q3, $price3);
 
--- 5. Уменьшаем stock
-UPDATE products SET stock = stock - $quantity_1 WHERE id = $product_id_1;
-UPDATE products SET stock = stock - $quantity_2 WHERE id = $product_id_2;
-UPDATE products SET stock = stock - $quantity_3 WHERE id = $product_id_3;
+UPDATE products SET stock = stock - $q1 WHERE id = $p1;
+UPDATE products SET stock = stock - $q2 WHERE id = $p2;
+UPDATE products SET stock = stock - $q3 WHERE id = $p3;
 
--- 6. Очищаем корзину
 DELETE FROM cart_items WHERE user_id = $1;
 
-END;
+COMMIT;
 ```
 
-===== Задача 3. Расчёт максимального DAU
+===== Задача 3. Baseline производительности
 
-====== Шаг 3.1. Нормализация нагрузки
+*Источник:* #link("https://www.percona.com/blog/postgresql-benchmark-2024/")[Percona PostgreSQL Benchmark 2024]
 
-*Подсчёт DML-операций в нашем endpoint'е:*
+*Конфигурация:* 8 vCPU, 32GB RAM, NVMe SSD (аналог AWS db.m5.2xlarge)
+
+*Результат:* pgbench TPC-B — *3,100 TPS*
+
+Это baseline для pgbench TPC-B нагрузки (5 DML операций) на данной конфигурации.
+
+===== Задача 4. Расчёт max RPS
+
+*Подсчёт DML-операций:*
 
 #table(
   columns: (auto, auto),
   stroke: 0.5pt,
   align: (left, center),
   table.header([*Операция*], [*Количество*]),
-  [SELECT (проверка stock)], [3],
+  [SELECT], [3],
   [INSERT INTO orders], [1],
   [INSERT INTO order_items], [3],
-  [UPDATE products (stock)], [3],
+  [UPDATE products], [3],
   [DELETE FROM cart_items], [1],
   table.hline(),
   [*Итого DML*], [*11*],
 )
 
-*Эталон: pgbench TPC-B = 5 DML*
+*Эталон pgbench TPC-B:* 5 DML (1 SELECT, 3 UPDATE, 1 INSERT)
 
 *Коэффициент сложности:*
-
 $ K = 11 / 5 = 2.2 $
 
-*Интерпретация:* наш endpoint делает в 2.2 раза больше операций, чем эталонная TPC-B транзакция.
+*Расчёт max RPS:*
+$ "max RPS" = frac(3100, 2.2) approx 1409 " запросов/сек" $
 
-*Важное замечание:* мы предполагаем, что сложность операций сопоставима (все запросы — точечный доступ по PK, без JOIN'ов и агрегаций). Если бы в нашем endpoint были сложные JOIN'ы, коэффициент K был бы выше.
+*Проверка через CPU-time (для 8-core сервера):*
 
-====== Шаг 3.2. Расчёт максимального RPS
+$ "CPU-time"_"pgbench" = frac(8 times 1000, 3100) approx 2.6 " мс" $
 
-*Шаг 1: Baseline TPS для 28 cores*
+$ "CPU-time"_"наш" = 2.6 times 2.2 approx 5.7 " мс" $
 
-Из справочника:
+$ "CPU load" = 1409 times 5.7 = 8031 " мс/сек" $
 
-$ "TPS"(28) = "TPS"_1 times 23.8 = 150 times 23.8 = 3570 " TPS" $
+$ "CPU budget" = 8 times 1000 = 8000 " мс/сек" $
 
-Округляем: *TPS(28) = 3,500 TPS*
+Загрузка ~100% — на пределе. Консервативная оценка: *~1,300 RPS*.
 
-Это производительность для pgbench TPC-B нагрузки (5 DML операций).
+===== Задача 5. Расчёт DAU
 
-*Шаг 2: Масштабирование на наш endpoint*
+*Параметры (обоснование):*
+- Активные часы: 12 (10:00–22:00 для e-commerce)
+- Действий на пользователя: 20 (просмотры каталога, карточек, редкие покупки)
+- Пиковый коэффициент: 2.5 (вечерний пик)
 
-Наш endpoint в K = 2.2 раза сложнее, значит он обрабатывается в 2.2 раза медленнее:
+$ "DAU" = frac(1300 times 43200, 20 times 2.5) = frac(56160000, 50) approx 1120000 $
 
-$ "max RPS" = frac("TPS"(28), K) = frac(3500, 2.2) = 1591 " запросов/сек" $
-
-Округляем: *max RPS ≈ 1,600 запросов/сек*
-
-====== Шаг 3.3. Проверка через CPU-time
-
-*Шаг 1: CPU-time для эталона*
-
-$ "CPU-time"_("TPC-B") = frac(28 " cores" times 1000 " мс/сек", 3500 " TPS") = 8 " мс" $
-
-*Шаг 2: CPU-time для нашего endpoint*
-
-$ "CPU-time"_("наш") = 8 " мс" times 2.2 = 17.6 " мс" $
-
-*Шаг 3: Проверка на 1,600 RPS*
-
-CPU нагрузка:
-
-$ "CPU load" = 1600 " RPS" times 17.6 " мс" = 28,160 " мс/сек" $
-
-CPU budget:
-
-$ "CPU budget" = 28 " cores" times 1000 " мс/сек" = 28,000 " мс/сек" $
-
-*Результат:* $28,160 > 28,000$ — мы *немного превышаем* CPU budget (на 0.6%).
-
-*Вывод:* оценка 1,600 RPS находится на грани возможностей CPU. В реальности могут быть дополнительные накладные расходы (парсинг HTTP, сериализация JSON, логирование), поэтому консервативная оценка:
-
-*max RPS ≈ 1,400-1,500 запросов/сек* (с запасом ~10%)
-
-====== Шаг 3.4. Расчёт максимального DAU
-
-*Сценарий использования пользователя в день:*
-
-#table(
-  columns: (1fr, auto),
-  stroke: 0.5pt,
-  [*Действие*], [*Количество*],
-  [Просмотр главной страницы], [1],
-  [Просмотр категории товаров], [2-3],
-  [Просмотр карточек товаров], [10-15],
-  [Добавление в корзину], [2-3],
-  [Оформление заказа], [0.05],
-  table.hline(),
-  [*Среднее действий на пользователя*], [*~20*],
-)
-
-*Примечание:* не все пользователи покупают каждый день (конверсия ~5%), но активные пользователи много просматривают.
-
-*Параметры:*
-- Активные часы: 12 (с 10:00 до 22:00)
-- Активные секунды: $12 times 3600 = 43,200 " сек"$
-- Пиковый коэффициент: 3× (вечерний пик с 18:00 до 21:00)
-
-*Расчёт DAU:*
-
-$ "DAU" = frac("RPS" times "активные секунды", "действий" times "пик") = frac(1500 times 43200, 20 times 3) = frac(64800000, 60) = 1080000 $
-
-*Результат: ~1 млн DAU*
+*Результат: ~1.1 млн DAU*
 
 ===== Проверка на здравый смысл
 
-*Сравнение с реальными e-commerce системами:*
-
-#table(
-  columns: (1fr, auto, auto),
-  stroke: 0.5pt,
-  [*Система*], [*DAU*], [*Серверов БД*],
-  [Небольшой интернет-магазин], [10K-100K], [1-2],
-  [Средний e-commerce], [100K-1M], [2-5],
-  [Крупный e-commerce], [1M-10M], [10-50],
-  table.hline(),
-  [*Наш расчёт*], [*1M*], [*1*],
-)
-
-*Анализ:*
-- Оценка (1M DAU на 1 сервер) выглядит реалистично для среднего e-commerce
-- В реальности могут быть дополнительные факторы:
-  - *Репликация:* read replicas разгружают master
-  - *Кэширование:* Redis для корзин и сессий снижает нагрузку на БД
-  - *Шардирование:* большие системы разделяют данные по регионам
-
 *Факторы, которые могут снизить производительность:*
-1. Сложные запросы (JOIN'ы, агрегации) — наш расчёт предполагал только точечный доступ
-2. Long transactions — если транзакции держат блокировки долго, throughput падает
-3. Hot rows — если все обновляют одну и ту же строку (например, счётчик), возникает contention
-4. Неоптимальные индексы — если нет индекса на часто используемом поле, запросы медленнее
+1. JOIN'ы и агрегации (наш расчёт предполагал только точечный доступ по PK)
+2. Long transactions и lock contention
+3. Hot rows (если много пользователей обновляют одну строку)
+4. Отсутствие индексов на часто используемых полях
 
-*Вывод:* результат порядка 1 млн DAU на одном сервере PostgreSQL выглядит разумным для OLTP-системы с простыми запросами.
+*Факторы, которые могут повысить производительность:*
+1. Read replicas для SELECT-запросов
+2. Кэширование (Redis) для корзин и сессий
+3. Connection pooling (PgBouncer)
 
-==== Справочник: академические источники и формулы
+==== Справочник
 
-===== 1. Эталонная нагрузка: pgbench TPC-B-like
+===== Эталонная нагрузка: pgbench TPC-B
 
 *Источник:* #link("https://www.postgresql.org/docs/current/pgbench.html")[PostgreSQL Documentation: pgbench]
 
-*Определение:* pgbench — официальный инструмент для тестирования производительности PostgreSQL. Режим `-b tpcb-like` эмулирует TPC-B нагрузку (упрощённую модель банковских транзакций).
-
-*Операции в одной транзакции:*
+pgbench — официальный инструмент PostgreSQL. Режим TPC-B выполняет:
 
 ```sql
 BEGIN;
@@ -4751,191 +4672,32 @@ UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
 SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
 UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
 UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
-INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
+INSERT INTO pgbench_history (tid, bid, aid, delta, mtime)
+  VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
 END;
 ```
 
-*Подсчёт DML-операций:*
-- BEGIN/END — не DML, служебные команды
-- 1× SELECT (точечное чтение по primary key)
-- 3× UPDATE (точечное обновление по primary key)
-- 1× INSERT (append в таблицу истории)
+*Итого: 5 DML операций* (1 SELECT, 3 UPDATE, 1 INSERT) — все точечные по PK.
 
-*Итого: 5 DML операций*
+===== Инструменты для других СУБД
 
-*Характер нагрузки:*
-- Все запросы используют индексы (точечный доступ по PK)
-- Нет JOIN'ов, сложных WHERE, агрегаций
-- Write-heavy (80% операций — модификации)
-- Короткие транзакции (OLTP)
+- *MySQL:* #link("https://github.com/akopytov/sysbench")[sysbench] — `sysbench oltp_read_write`
+- *MongoDB:* #link("https://github.com/brianfrankcooper/YCSB")[YCSB] — Yahoo! Cloud Serving Benchmark
+- *Cassandra/ScyllaDB:* #link("https://cassandra.apache.org/doc/stable/cassandra/tools/cassandra_stress.html")[cassandra-stress]
 
-===== 2. Формула масштабирования по ядрам (OLTP)
+===== Формула CPU-time
 
-*Источник 1:* Boyd-Wickizer et al., "An Analysis of Linux Scalability to Many Cores", MIT OSDI 2010 #link("https://pdos.csail.mit.edu/papers/linux:osdi10.pdf")[PDF]
+$ "CPU-time на транзакцию" = frac(N_"cores" times 1000 " мс/сек", "TPS") $
 
-*Источник 2:* Fröhlich, "Experimenting with scaling and full parallelism in PostgreSQL", CYBERTEC 2020 #link("https://www.cybertec-postgresql.com/en/experimenting-scaling-full-parallelism-postgresql/")[Blog post]
+Если ваш endpoint в K раз сложнее эталона:
 
-*Вывод из исследований:*
-- PostgreSQL OLTP нагрузка показывает *линейное масштабирование* до ~16 cores
-- После 16 cores производительность продолжает расти, но медленнее (~0.6-0.7× per core)
-- Причина: lock contention в PostgreSQL (блокировки строк, WAL buffer, buffer pool latches)
+$ "CPU-time"_"ваш" = "CPU-time"_"эталон" times K $
 
-*Формула масштабирования:*
+Проверка: $"RPS" times "CPU-time"_"ваш" <= N_"cores" times 1000$
 
-$ "TPS"(N) = "TPS"_1 times (min(N, 16) + max(N - 16, 0) times alpha) $
+===== Формула DAU
 
-Где:
-- $N$ — число ядер
-- $"TPS"_1$ — производительность на одном ядре (baseline)
-- $alpha$ — коэффициент масштабирования после 16 cores (консервативная оценка: $alpha = 0.65$)
-
-*Пример расчёта для 28 cores:*
-
-$ "TPS"(28) = "TPS"_1 times (16 + (28 - 16) times 0.65) = "TPS"_1 times (16 + 12 times 0.65) = "TPS"_1 times 23.8 $
-
-*Физический смысл:* первые 16 cores дают полное ускорение (×16), следующие 12 cores дают ускорение (×12 × 0.65 = ×7.8), итого ×23.8.
-
-===== 3. Per-core baseline для TPC-B нагрузки
-
-*Источник:* Community тесты производительности, PostgreSQL mailing list 2015-2020 #link("https://www.postgresql.org/message-id/1962FCC4-B99A-4B58-BE87-9EFA125F6B45@skogoglandskap.no")[Thread: Max TPS survey]
-
-*Диапазон измерений:*
-- Простой workstation (consumer SSD, default config): ~1,000-2,000 TPS per core
-- Tuned система (NVMe, optimized PostgreSQL config): ~3,000-5,000 TPS per core
-- High-end (enterprise SSD, экспертный tuning): до 10,000+ TPS per core
-
-*Факторы, влияющие на per-core TPS:*
-1. *Скорость fsync* (WAL commit) — главное узкое место для write-heavy нагрузки
-   - SATA SSD: ~500 мкс fsync → lower TPS
-   - NVMe SSD: ~100-200 мкс fsync → higher TPS
-2. *Настройки PostgreSQL:*
-   - `shared_buffers` (размер buffer pool)
-   - `wal_buffers`, `checkpoint` параметры
-   - `synchronous_commit` (можно отключить для non-critical данных, ×10 boost)
-3. *Размер БД:* если вся БД влезает в RAM → кэш 100% → максимальный TPS
-
-*Консервативный baseline для учебной задачи:*
-
-$ "TPS"_1 = 150 " TPS per core" $
-
-*Обоснование:*
-- Предполагаем дефолтную конфигурацию PostgreSQL (без экспертного тюнинга)
-- SSD диск (не NVMe)
-- `synchronous_commit = on` (дожидаемся fsync, безопасно)
-- БД не влезает полностью в RAM (есть disk I/O)
-
-Это нижняя граница; реальная производительность может быть выше.
-
-===== 4. Расчёт baseline для 28 cores
-
-$ "TPS"(28) = 150 times 23.8 = 3570 " TPS" $
-
-Округляем консервативно: *TPS(28) ≈ 3,500 TPS*
-
-*Проверка:* сравниваем с managed services (AWS RDS, Azure).
-
-*Источник:* Aiven тесты производительности, #link("https://aiven.io/blog/aiven-for-postgresqlr-performance-benchmarks-across-cloud")[Blog post]
-
-- AWS RDS db.m5.4xl (16 vCPU, 64GB RAM, SSD): ~2,700 TPS
-- Azure Flex Gen5 (16 vCPU, 64GB RAM, SSD): ~2,400 TPS
-
-Масштабируем 16 vCPU → 28 cores с формулой:
-- 16 cores: $150 times 16 = 2400 " TPS"$ ✓ (совпадает с Azure)
-- 28 cores: $150 times 23.8 = 3570 " TPS"$ (на 30% выше, т.к. у нас больше ядер)
-
-Оценка выглядит разумной.
-
-===== 5. Формула расчёта DAU
-
-*Источник:* типичная практика capacity planning в индустрии
-
-$ "DAU" = frac("RPS" times "активные секунды в день", "действий на пользователя" times "пиковый коэффициент") $
-
-Где:
-- *RPS* — расчётная пропускная способность сервера
-- *Активные секунды* — не 24 часа! Обычно 8-12 часов активности (например, с 10:00 до 22:00)
-  $ "активные секунды" = 12 " часов" times 3600 = 43200 " сек" $
-- *Действий на пользователя* — сколько запросов делает один пользователь в активные часы
-  - Интернет-магазин: ~15-20 действий (просмотры, клики, возможно 1 покупка)
-  - Соцсеть: ~50-100 действий (скроллинг ленты, лайки, комментарии)
-- *Пиковый коэффициент* — отношение пиковой нагрузки к средней
-  - Типично: 2-3× (вечерний пик с 18:00 до 21:00)
-  - Для некоторых сервисов может быть 5-10× (доставка еды в обед)
-
-*Пример:*
-
-$ "DAU" = frac(3000 " RPS" times 43200 " сек", 20 " действий" times 3) = frac(129600000, 60) = 2160000 $
-
-Результат: ~2 млн DAU при 3,000 RPS и 20 действиях на пользователя.
-
-===== 6. Проверка через CPU-time
-
-*Метод:* если мы знаем TPS на N cores, можем вычислить среднее CPU-time на транзакцию.
-
-$ "CPU-time на транзакцию" = frac(N " cores" times 1000 " мс/сек", "TPS") $
-
-*Физический смысл:* N cores дают нам N×1000 мс процессорного времени в секунду. Если мы выполняем TPS транзакций, каждая "съедает" в среднем (N×1000)/TPS миллисекунд CPU.
-
-*Пример для 28 cores и 3,500 TPS:*
-
-$ "CPU-time" = frac(28 times 1000, 3500) = 8 " мс" $
-
-Это среднее CPU-time для pgbench TPC-B транзакции (5 DML операций).
-
-*Проверка вашего endpoint'а:*
-
-Если ваш endpoint в K раз сложнее:
-
-$ "CPU-time"_("ваш") = 8 " мс" times K $
-
-При планируемом RPS нагрузка на CPU:
-
-$ "CPU load" = "RPS" times "CPU-time"_("ваш") " мс/сек" $
-
-Эта нагрузка не должна превышать CPU budget:
-
-$ "CPU budget" = 28 " cores" times 1000 " мс/сек" = 28,000 " мс/сек" $
-
-Если $"CPU load" > "CPU budget"$, значит вы упираетесь в CPU и нужно пересмотреть расчёт RPS.
-
-==== Рекомендации по выполнению
-
-*1. Если у вас другая СУБД (MySQL, MongoDB, Cassandra):*
-
-Метод остаётся тем же, но нужно найти релевантные бенчмарки:
-
-- *MySQL:* используйте `sysbench oltp_read_write` вместо pgbench
-  - Источник: #link("https://github.com/akopytov/sysbench")[Sysbench docs]
-  - Baseline: MySQL обычно на 10-20% быстрее PostgreSQL для read-heavy, но медленнее для write-heavy из-за global lock в InnoDB
-
-- *MongoDB:* используйте YCSB (инструмент тестирования облачных хранилищ)
-  - Источник: #link("https://github.com/brianfrankcooper/YCSB")[YCSB GitHub]
-  - Baseline: для документо-ориентированных запросов MongoDB может быть в 2-3× быстрее для writes (нет строгих транзакций), но медленнее для точечных reads
-
-- *Cassandra/ScyllaDB:* linear scalability, но другой тип нагрузки
-  - Источник: #link("https://www.scylladb.com/product/benchmarks/")[ScyllaDB тесты производительности]
-  - Особенность: нет JOIN'ов, denormalized data, eventual consistency
-
-*Главное:* найдите академические или производственные тесты для вашей СУБД, нормализуйте нагрузку через операции, масштабируйте.
-
-
-*3. Учитывайте кэширование:*
-
-Наш расчёт предполагал, что не весь dataset влезает в RAM (поэтому консервативный baseline 150 TPS/core).
-
-Если ваша БД *полностью влезает в RAM:*
-- PostgreSQL с warm cache может давать 5,000-10,000 TPS/core
-- Пересчитайте baseline: $"TPS"_1 = 5000$, тогда $"TPS"(28) = 5000 times 23.8 = 119,000 " TPS"$
-
-Это upper bound; реально будет меньше из-за WAL fsync и lock contention.
-
-*4. Проверьте расчёты CPU-time:*
-
-Это лучший sanity check. Если CPU load > CPU budget на 50-100%, значит где-то ошибка:
-- Либо вы неправильно посчитали количество операций (K)
-- Либо ваши операции намного сложнее, чем в эталоне (есть JOIN'ы, агрегации)
-- Либо baseline TPS завышен
-
+$ "DAU" = frac("RPS" times "активные секунды", "действий на пользователя" times "пиковый коэффициент") $
 
 #pagebreak()
 === Практика 3: Специализированные индексы и поиск (Лекции 10-13: Inverted Index, векторный поиск, геопоиск)

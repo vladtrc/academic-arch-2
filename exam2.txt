@@ -1,0 +1,74 @@
+Билет 1: Lakehouse, UPSERT в ClickHouse: практические подходы и ограничения
+Билет 2: Apache Kafka: Streams API, Использование Kafka для интеграции микросервисов
+Билет 3: Apache Spark: Роль Driver’а, Традиционный подход организации хранилищ
+Билет 4: Apache Kafka: Принципы доставки данных, Apache Spark: DataFrame vs Dataset API
+Билет 5: Kubernetes: Kubectl, Zookeeper
+Билет 6: Apache Spark: Core, Kubernetes: Файл Manifest/Spec
+Билет 7: Kubernetes: Pods, Apache Spark: Основные отличия между RDD, DataFrame и Dataset
+Билет 8: Kubernetes: Описание инструмента & Сертифицированные дистрибутивы, Apache Spark: Применение (Машинное обучение & Анализ больших данных)
+Билет 9: База данных в памяти, Apache Kafka: Параметры потребителей
+Билет 10: Отличия SQL vs NoSQL СУБД, Kubernetes: GCP LoadBalancer
+Билет 11: MergeTree: ключевые возможности и варианты, Apache Spark: Spark SQL
+Билет 12: Apache Kafka: Producers & Consumers, CEPH (Common Extensible Parallel Hierarchical storage)
+Билет 13: Apache Kafka: Интеграция с Apache Spark и Apache Flink, Apache Spark: Broadcast
+Билет 14: Apache Spark: Партиционирование данных, ClickHouse: что это и где применяется?
+Билет 15: Apache Spark: Когда использовать RDD?, ClickHouse: основные отличия от классических СУБД
+Билет 16: Apache Spark Dataframe API: Агрегации, Kubernetes: Пространства имен
+Билет 17: Apache Spark: Dataframe API, Kubernetes: ClusterIP
+Билет 18: Apache Spark vs Hadoop MapReduce, Apache Flink
+Билет 19: Kubernetes: Оркестровка контейнеров, Apache Spark: Task Scheduler & DAG
+Билет 20: Kubernetes: Kubelet & Kube proxy, Apache Kafka Connect API: Change Data Capture & Импорт и экспорт данных
+Билет 21: Распределенные таблицы и шардирование в ClickHouse, Kubernetes: Deployment
+Билет 22: Apache Spark: Логическое & Физическое планирование, Kubernetes: Службы
+Билет 23: Основные принципы и парадигмы распределённых систем, Apache Spark: Физическое планирование
+Билет 24: Apache Spark: Преимущества Dataset API, Apache Kafka: Topics & Partitions
+Билет 25: Apache Kafka: Режимы репликации, Apache Spark: Логическое планирование
+Билет 26: Apache Spark: Определение & история, Apache Spark: Архитектура Spark SQL
+Билет 27: Apache Kafka: Кластеризация, Apache Spark: Основные отличия между RDD, DataFrame и Dataset
+Билет 28: Apache Kafka: Consumer Groups, TTL в ClickHouse: сценарии и настройка
+Билет 29: Цели Apache Spark, Репликация в ClickHouse: ReplicatedMergeTree и роль ZooKeeper/ClickHouse Keeper
+Билет 30: Обновления данных: ALTER UPDATE/DELETE и как устроены мутации, Apache Kafka: Основные параметры производительности Kafka
+Билет 31: CAP теорема, Kubernetes: LoadBalancer vs Ingress
+Билет 32: Kubernetes: Ограничения NodePort, Apache Spark: Когда использовать RDD?
+Билет 33: Kubernetes: Создание капсул (Декларативный способ), Партиционирование в ClickHouse: зачем нужно и как выбирать ключ
+Билет 34: Primary Key в ClickHouse: отличие от ORDER BY, Методы анализа данных для больших данных (классические)
+Билет 35: Kubernetes: NodePort, Apache Spark: Роль Executor’ов
+Билет 36: NoSQL СУБД: графовые хранилища и ключ-значение, Распределенные вычисления
+Билет 37: Kubernetes vs Docker Swarm, Apache Kafka: Описание & История
+Билет 38: Примеры распределённых систем и их применение, Apache Kafka: Интеграция с платформами данных
+Билет 39: Apache Kafka: Восстановление данных при сбоях, Проблемы масштабируемости централизованных систем
+Билет 40: Apache Spark: Task Scheduler & DAG, Типы кластеров и их особенности
+Билет 41: Kubernetes: K3s, Apache Kafka Connect API: Передача данных в хранилища & Поддержка различных форматов
+Билет 42: Kubernetes: Императивные и декларативные команды, Отличия централизованной архитектуры от децентрализованной
+Билет 43: Роль облачных систем в распределённых системах, Свойства больших данных: Разнообразие и Достоверность
+Билет 44: Apache Spark: Transformations & Actions, Apache Spark: RDD
+Билет 45: CAP теорема и её применение в распределённых системах, Apache Spark Dataframe API: Кэширование данных
+Билет 46: Kubernetes: Volumes, Apache Kafka: Архитектура
+Билет 47: Apache Kafka: Популярные сценарии использования, Apache Kafka: Connect API
+Билет 48: ORDER BY в ClickHouse: как влияет на хранение и скорость запросов, Apache Spark: Применение (Стриминг данных & Графовые вычисления)
+Билет 49: Apache Spark: Cluster Manager, Kubernetes: Стратегия скользящего обновления
+Билет 50: Kubernetes: ETCD & Планировщик, Lambda Architecture
+Билет 51: Kubernetes: Планирование (nodeAffinity), Пример использования Apache Kafka в распределённых системах
+Билет 52: Движки ClickHouse: назначение и примеры, Apache Spark: Dataset
+Билет 53: Основные источники данных для Big Data, Apache Kafka: Роль Zookeeper
+Билет 54: Методы анализа данных для больших данных (новые), Apache Kafka: Параметры потребителей
+Билет 55: Виды кластеров (HA, Beowulf, Облачные), Apache Kafka: Репликация
+Билет 56: NoSQL СУБД: документно-ориентированные, колоночные хранилища, Apache Spark: Архитектура
+Билет 57: Apache Spark Dataframe API: Группировки, Apache Kafka: Schema Registry
+Билет 58: Kubernetes: MetalLB, Слияния (merges) в ClickHouse: зачем нужны и как работают
+Билет 59: Apache Kafka Connect API: Обработка событий, Вычисления в памяти
+Билет 60: Масштабирование реляционной СУБД, Основная архитектура Hadoop-кластера
+Билет 61: Apache Spark: Catalyst Optimizer, Свойства больших данных: Объем и Скорость
+Билет 62: Kubernetes: Создание капсул (Императивный способ), Apache Kafka Connect API: Аналитика в реальном времени & Сбор метрик
+Билет 63: Kubernetes: Kubernetes Worker, Преимущества децентрализованных систем
+Билет 64: Kubernetes: Планирование (nodeSelector), Apache Kafka: Брокеры Kafka
+Билет 65: Kubernetes: LoadBalancer, Apache Spark Dataframe API: Join
+Билет 66: Технологии потоковой обработки данных, Kubernetes: Масштабирование капсул
+Билет 67: Kubernetes: Менеджер сервера API & Менеджер по работе с контроллерами, Apache Kafka: Техники для повышения производительности Kafka
+Билет 68: Kubernetes: Мастер Kubernetes, Kubernetes: emptyDir
+Билет 69: Пограничные вычисления, Advanced Architecture
+Билет 70: Apache Spark: Transformations & Actions, Apache Kafka: Потоковая vs пакетная обработка данных
+Билет 71: Кэширование памяти, Kubernetes: Постоянный том и утверждение постоянного тома
+Билет 72: Apache Spark: DataFrame, Основные характеристики HDFS
+Билет 73: Apache Spark: Преимущества Dataset API, Отличия традиционной аналитики от аналитики больших данных
+Билет 74: Apache Spark: Отличия repartition и coalesce, Kubernetes: Taints and Tolerations
