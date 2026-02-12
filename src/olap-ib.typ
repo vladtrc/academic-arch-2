@@ -581,11 +581,11 @@ ENGINE = Distributed(my_cluster, default, events_local, user_id);
 
 ==== Задание
 
-+ Создать Row Policy --- `analyst` видит только данные своего подразделения:
++ Создать Row Policy --- `viewer` видит только данные подразделения `sales`:
   ```sql
   CREATE ROW POLICY sales_only ON events
     FOR SELECT USING department = 'sales'
-    TO analyst;
+    TO viewer;
   ```
 + Подключиться как `viewer` и выполнить:
   ```sql
