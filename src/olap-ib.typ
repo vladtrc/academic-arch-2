@@ -614,9 +614,12 @@ ENGINE = Distributed(my_cluster, default, events_local, user_id);
 
 + Настроить квоту для роли `analyst`:
   ```sql
-  CREATE QUOTA analyst_quota
-    FOR INTERVAL 1 MINUTE MAX QUERIES 10,
-    FOR INTERVAL 1 HOUR MAX RESULT_ROWS 100000
+  CREATE QUOTA analyst_quota_queries
+    FOR INTERVAL 1 MINUTE MAX queries = 10
+    TO analyst;
+
+  CREATE QUOTA analyst_quota_rows
+    FOR INTERVAL 1 HOUR MAX result_rows = 100000
     TO analyst;
   ```
 + Подключиться как `viewer` и выполнить 11 запросов подряд --- на 11-м получить ошибку `Quota exceeded`.
