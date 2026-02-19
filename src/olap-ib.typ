@@ -608,7 +608,7 @@ ENGINE = Distributed(my_cluster, default, events_local, user_id);
 - Чем Row Policy в ClickHouse отличается от `VIEW` с фильтром?
 - Можно ли обойти Row Policy через подзапрос или `JOIN`?
 
-=== Часть 3: Квоты и ограничения (дополнительно, не обязательно)
+=== Часть 3: Квоты и ограничения
 
 ==== Задание
 
