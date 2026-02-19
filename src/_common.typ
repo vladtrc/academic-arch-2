@@ -70,23 +70,10 @@
   "loc": ("LOC", "Lines of Code — метрика объёма программного кода, измеряемая количеством строк. Используется для оценки размера кодовой базы, сложности проекта и трудозатрат на разработку. Не включает пустые строки и комментарии при подсчёте физических строк (PLOC), либо учитывает только исполняемые инструкции при подсчёте логических строк (LLOC)."),
 )
 
-// --- Вставка термина в тексте со ссылкой на определение ---
-#let term(name) = context {
-  let (abbr, def) = glossary.at(name)
-  let lbl = "term-use-" + name
-  let uses = query(selector(label(lbl)))
-
-  if uses.len() == 0 {
-    [#label(lbl)#abbr#footnote[#def]]
-  } else {
-    let first_loc = uses.first().location()
-    if here().location() == first_loc {
-      [#label(lbl)#abbr#footnote[#def]]
-    } else {
-      let fn_num = counter(footnote).at(first_loc).get().first()
-      [#label(lbl)#abbr#super[#link(first_loc)[#fn_num]]]
-    }
-  }
+// --- Вставка термина в тексте ---
+#let term(name) = {
+  let (abbr, _) = glossary.at(name)
+  abbr
 }
 
 // --- Вставка только аббревиатуры без сноски ---
