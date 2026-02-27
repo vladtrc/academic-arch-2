@@ -6,36 +6,56 @@ layers:
         components:
           - id: handler_rest_get_course
             label: GET /course/:id
+            depends_on:
+              - usecase_get_course_by_id
           - id: handler_rest_get_modules
             label: GET /course/:id/modules
+            depends_on:
+              - usecase_get_course_modules
           - id: handler_rest_get_progress
             label: GET /profile/me/progress
+            depends_on:
+              - usecase_get_my_progress
           - id: handler_rest_attach_material
             label: |
               POST /course/:id/materials
               { "fileUrl": "...", "title": "..." }
+            depends_on:
+              - usecase_attach_material
           - id: handler_rest_publish_course
             label: |
               POST /course/:id/publish
               { "published": true }
+            depends_on:
+              - usecase_publish_course
       - name: HTML панель администратора
         components:
           - id: handler_html_course_page
             label: GET /admin/course/:id
+            depends_on:
+              - usecase_get_course_by_id
           - id: handler_html_invite_user
             label: |
               POST /admin/course/:id/invite-user
               { "email": "...", "role": "student" }
+            depends_on:
+              - usecase_invite_user_to_course
           - id: handler_html_disable_course
             label: POST /admin/course/:id/disable
+            depends_on:
+              - usecase_disable_course
           - id: handler_html_change_user_role
             label: |
               POST /admin/course/:id/user/:userId/role
               { "role": "teacher" }
+            depends_on:
+              - usecase_change_user_role
           - id: handler_html_update_deadline
             label: |
               POST /admin/course/:id/deadline
               { "deadline": "2026-03-10" }
+            depends_on:
+              - usecase_update_course_deadline
 
   - id: usecases
     name: сценарии приложения
@@ -45,146 +65,149 @@ layers:
           получить курс
           по ID
         stroke: "#d97706"
+        depends_on:
+          - iface_course_get_by_id
       - id: usecase_get_course_modules
-        label: получить модули курса
+        label: получить разделы курса
         stroke: "#d97706"
+        depends_on:
+          - iface_modules_list
       - id: usecase_get_my_progress
         label: |
           получить прогресс
           по всем курсам
         stroke: "#d97706"
+        depends_on:
+          - iface_modules_progress
       - id: usecase_attach_material
         label: прикрепить материал
         stroke: "#d97706"
+        depends_on:
+          - iface_file_save
       - id: usecase_publish_course
         label: опубликовать курс
         stroke: "#d97706"
+        depends_on:
+          - iface_course_get_by_id
+          - iface_modules_list
+          - iface_course_update_status
+          - iface_calendar_update
       - id: usecase_invite_user_to_course
         label: |
           пригласить пользователя
           в курс
         stroke: "#d97706"
+        depends_on:
+          - iface_membership_upsert
       - id: usecase_disable_course
         label: отключить курс
         stroke: "#d97706"
+        depends_on:
+          - iface_course_update_status
       - id: usecase_change_user_role
         label: изменить роль пользователя в курсе
         stroke: "#d97706"
+        depends_on:
+          - iface_membership_upsert
       - id: usecase_update_course_deadline
         label: |
           обновить дедлайн
           курса
         stroke: "#d97706"
+        depends_on:
+          - iface_course_update_deadline
+          - iface_calendar_update
 
-  - id: ports
+  - id: interfaces
     name: |
-      контракты доступа
-      к данным и сервисам
+      порты приложения
+      (интерфейсы)
+    no_leading_divider: true
     sections:
-      - name: БД
+      - name: Курс
         components:
-          - id: port_get_course_by_id
-            label: |
-              получить курс
-              по ID
-            stroke: "#1d4ed8"
-          - id: port_list_modules_by_course
-            label: |
-              получить модули
-              по ID курса
-            stroke: "#1d4ed8"
-          - id: port_get_progress_by_user
-            label: |
-              получить прогресс
-              по userID
-            stroke: "#1d4ed8"
-          - id: port_save_course_material_metadata
-            label: сохранить метаданные материала курса
-            stroke: "#1d4ed8"
-          - id: port_update_course_status
-            label: обновить статус курса
-            stroke: "#1d4ed8"
-          - id: port_upsert_course_membership
-            label: добавить/обновить участие пользователя в курсе
-            stroke: "#1d4ed8"
-          - id: port_update_course_deadline_db
-            label: обновить дедлайн курса в БД
-            stroke: "#1d4ed8"
+          - id: iface_course_get_by_id
+            label: получить по ID
+            stroke: "#d97706"
+          - id: iface_course_update_status
+            label: обновить статус
+            stroke: "#d97706"
+          - id: iface_course_update_deadline
+            label: обновить дедлайн
+            stroke: "#d97706"
+      - name: Разделы курса
+        components:
+          - id: iface_modules_list
+            label: получить по курсу
+            stroke: "#d97706"
+          - id: iface_modules_progress
+            label: получить прогресс
+            stroke: "#d97706"
+      - name: Участники курса
+        components:
+          - id: iface_membership_upsert
+            label: добавить / изменить роль
+            stroke: "#d97706"
       - name: Файловое хранилище
         components:
-          - id: port_store_course_material_file
-            label: |
-              сохранить файл
-              материала курса
-            stroke: "#2563eb"
+          - id: iface_file_save
+            label: сохранить файл материала
+            stroke: "#d97706"
       - name: Сервис календаря
         components:
-          - id: port_sync_course_calendar_event
+          - id: iface_calendar_update
+            label: обновить событие
+            stroke: "#d97706"
+
+  - id: implementations
+    name: реализации
+    sections:
+      - name: База данных
+        components:
+          - id: impl_db_course_read
             label: |
-              обновить событие курса
-              в календаре
-            stroke: "#0f766e"
-
-connections:
-  - from: handler_rest_get_course
-    to: usecase_get_course_by_id
-  - from: handler_html_course_page
-    to: usecase_get_course_by_id
-
-  - from: handler_rest_get_modules
-    to: usecase_get_course_modules
-
-  - from: handler_rest_get_progress
-    to: usecase_get_my_progress
-
-  - from: handler_rest_attach_material
-    to: usecase_attach_material
-
-  - from: handler_rest_publish_course
-    to: usecase_publish_course
-
-  - from: handler_html_invite_user
-    to: usecase_invite_user_to_course
-  - from: handler_html_disable_course
-    to: usecase_disable_course
-  - from: handler_html_change_user_role
-    to: usecase_change_user_role
-  - from: handler_html_update_deadline
-    to: usecase_update_course_deadline
-
-  - from: usecase_get_course_by_id
-    to: port_get_course_by_id
-
-  - from: usecase_get_course_modules
-    to: port_list_modules_by_course
-
-  - from: usecase_get_my_progress
-    to: port_get_progress_by_user
-
-  - from: usecase_attach_material
-    to: port_store_course_material_file
-  - from: usecase_attach_material
-    to: port_save_course_material_metadata
-
-  - from: usecase_publish_course
-    to: port_list_modules_by_course
-  - from: usecase_publish_course
-    to: port_update_course_status
-  - from: usecase_publish_course
-    to: port_sync_course_calendar_event
-
-  - from: usecase_invite_user_to_course
-    to: port_upsert_course_membership
-
-  - from: usecase_disable_course
-    to: port_update_course_status
-
-  - from: usecase_change_user_role
-    to: port_upsert_course_membership
-
-  - from: usecase_update_course_deadline
-    to: port_update_course_deadline_db
-  - from: usecase_update_course_deadline
-    to: port_sync_course_calendar_event
-
-note: ""
+              запрос в БД на
+              получение курса по ID
+            depends_on:
+              - iface_course_get_by_id
+          - id: impl_db_course_status
+            label: |
+              запрос в БД на
+              обновление статуса курса
+            depends_on:
+              - iface_course_update_status
+          - id: impl_db_course_deadline
+            label: |
+              запрос в БД на
+              обновление дедлайна курса
+            depends_on:
+              - iface_course_update_deadline
+          - id: impl_db_modules
+            label: |
+              запрос в БД на
+              получение разделов курса
+            depends_on:
+              - iface_modules_list
+              - iface_modules_progress
+          - id: impl_db_membership
+            label: |
+              запрос в БД на
+              изменение участия в курсе
+            depends_on:
+              - iface_membership_upsert
+      - name: Файловое хранилище
+        components:
+          - id: impl_storage_files
+            label: |
+              загрузка файла
+              в хранилище
+            depends_on:
+              - iface_file_save
+      - name: Сервис календаря
+        components:
+          - id: impl_calendar
+            label: |
+              вызов API
+              сервиса календаря
+            depends_on:
+              - iface_calendar_update

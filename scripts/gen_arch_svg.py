@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import argparse
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 try:
@@ -19,7 +19,6 @@ ROW_GAP = 26
 BOX_W = 280
 BOX_H = 92
 HEADER_GAP = 70
-BOTTOM_NOTE_GAP = 64
 SECTION_TITLE_H = 28
 SECTION_GAP = 42
 
@@ -29,6 +28,7 @@ class Component:
     id: str
     label: list[str]
     stroke: str = "#222"
+    depends_on: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -36,6 +36,7 @@ class Layer:
     id: str
     name: str
     sections: list["LayerSection"]
+    no_leading_divider: bool = False
 
 
 @dataclass
@@ -244,7 +245,14 @@ def parse_component(data: object, fallback_id: str) -> Component:
         )
 
     stroke = str(data.get("stroke", "#222"))
-    return Component(id=cid, label=label, stroke=stroke)
+    raw_connects = data.get("depends_on", [])
+    if isinstance(raw_connects, str):
+        depends_on = [raw_connects]
+    elif isinstance(raw_connects, list):
+        depends_on = [str(x) for x in raw_connects]
+    else:
+        depends_on = []
+    return Component(id=cid, label=label, stroke=stroke, depends_on=depends_on)
 
 
 def parse_layers(doc: dict) -> list[Layer]:
@@ -314,7 +322,8 @@ def parse_layers(doc: dict) -> list[Layer]:
                 comps.append(comp)
             sections.append(LayerSection(name="", components=comps))
 
-        layers.append(Layer(id=lid, name=name, sections=sections))
+        no_divider = bool(raw_layer.get("no_leading_divider", False))
+        layers.append(Layer(id=lid, name=name, sections=sections, no_leading_divider=no_divider))
 
     return layers
 
@@ -378,7 +387,7 @@ def svg_arrow(x1: int, y1: int, x2: int, y2: int) -> str:
     )
 
 
-def render(layers: list[Layer], connections: list[dict[str, str]], note: str) -> str:
+def render(layers: list[Layer], connections: list[dict[str, str]]) -> str:
     center_layer_index = len(layers) // 2
 
     def section_has_title(layer: Layer, section: LayerSection) -> bool:
@@ -397,7 +406,7 @@ def render(layers: list[Layer], connections: list[dict[str, str]], note: str) ->
 
     max_content_height = max(layer_content_height(layer) for layer in layers)
     width = MARGIN_X * 2 + len(layers) * BOX_W + (len(layers) - 1) * LAYER_GAP
-    height = MARGIN_Y + HEADER_GAP + max_content_height + BOTTOM_NOTE_GAP + 32
+    height = MARGIN_Y + HEADER_GAP + max_content_height + 32
 
     parts: list[str] = []
     parts.append(
@@ -421,10 +430,10 @@ def render(layers: list[Layer], connections: list[dict[str, str]], note: str) ->
     for li, layer in enumerate(layers):
         x = MARGIN_X + li * (BOX_W + LAYER_GAP)
 
-        if li > 0:
+        if li > 0 and not layer.no_leading_divider:
             sep_x = x - (LAYER_GAP // 2)
             parts.append(
-                f'<line x1="{sep_x}" y1="{MARGIN_Y - 24}" x2="{sep_x}" y2="{height - BOTTOM_NOTE_GAP - 18}" stroke="#111" stroke-width="3"/>'
+                f'<line x1="{sep_x}" y1="{MARGIN_Y - 24}" x2="{sep_x}" y2="{height - 18}" stroke="#111" stroke-width="3"/>'
             )
 
         layer_name_lines = (
@@ -476,15 +485,6 @@ def render(layers: list[Layer], connections: list[dict[str, str]], note: str) ->
 
         parts.append(svg_arrow(x1, src_mid_y, x2, dst_mid_y))
 
-    if note:
-        note_lines = note.splitlines() if "\n" in note else [note]
-        note_y = height - 24 - (len(note_lines) - 1) * 22
-        parts.append(
-            svg_multiline_text(
-                MARGIN_X, note_y, note_lines, size=18, weight="600", lh=22
-            )
-        )
-
     parts.append("</svg>")
     return "\n".join(parts)
 
@@ -518,10 +518,19 @@ def main() -> None:
         for section in layer.sections
         for c in section.components
     }
-    connections = parse_connections(doc, component_ids)
-    note = str(doc.get("note", "")).strip()
+    inline_connections: list[dict[str, str]] = []
+    for layer in layers:
+        for section in layer.sections:
+            for comp in section.components:
+                for target in comp.depends_on:
+                    if target not in component_ids:
+                        raise ValueError(
+                            f"В depends_on компонента {comp.id!r}: неизвестный id {target!r}"
+                        )
+                    inline_connections.append({"from": comp.id, "to": target})
+    connections = inline_connections + parse_connections(doc, component_ids)
 
-    svg = render(layers, connections, note)
+    svg = render(layers, connections)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(svg, encoding="utf-8")
     print(f"Generated: {output_path}")
