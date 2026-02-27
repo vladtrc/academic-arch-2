@@ -3,6 +3,8 @@ SRCS   := $(wildcard src/[!_]*.typ)
 PDFS   := $(patsubst src/%.typ,%.pdf,$(SRCS))
 COMMON := src/_common.typ
 FILE   ?= src/ais.typ
+ARCH_YAML := scripts/clean-architecture.yaml
+ARCH_SVG  := src/assets/clean-architecture.svg
 
 .PHONY: all build watch clean list
 
@@ -15,6 +17,11 @@ endif
 all: build
 
 build: $(PDFS)
+
+$(ARCH_SVG): scripts/gen_arch_svg.py $(ARCH_YAML) scripts/pyproject.toml
+	UV_CACHE_DIR=/tmp/uv-cache uv run --no-sync --project scripts scripts/gen_arch_svg.py --input $(ARCH_YAML) --output $(ARCH_SVG)
+
+ais.pdf: $(ARCH_SVG)
 
 %.pdf: src/%.typ $(COMMON)
 	docker run --rm -v $(CURDIR):/work -w /work $(IMAGE) compile $< $@

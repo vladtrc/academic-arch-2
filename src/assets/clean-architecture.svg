@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="1482" viewBox="0 0 1160 1482">
+
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+          markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#222"/>
+  </marker>
+</defs>
+
+<rect x="0" y="0" width="1160" height="1482" fill="white"/>
+<text x="80" y="90" font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="#111">обработчики</text>
+<text x="78" y="180" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#111">REST API сервер</text>
+<rect x="70" y="188" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="242" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">GET /course/:id</text>
+<rect x="70" y="306" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="360" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">GET /course/:id/modules</text>
+<rect x="70" y="424" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="478" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">GET /profile/me/progress</text>
+<rect x="70" y="542" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="584" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">POST /course/:id/materials</text>
+<text x="84" y="608" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">{ &quot;fileUrl&quot;: &quot;...&quot;, &quot;title&quot;: &quot;...&quot; }</text>
+<rect x="70" y="660" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="702" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">POST /course/:id/publish</text>
+<text x="84" y="726" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">{ &quot;published&quot;: true }</text>
+<text x="78" y="814" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#111">HTML панель администратора</text>
+<rect x="70" y="822" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="876" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">GET /admin/course/:id</text>
+<rect x="70" y="940" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="982" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">POST /admin/course/:id/invite-user</text>
+<text x="84" y="1006" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">{ &quot;email&quot;: &quot;...&quot;, &quot;role&quot;: &quot;student&quot; }</text>
+<rect x="70" y="1058" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="1112" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">POST /admin/course/:id/disable</text>
+<rect x="70" y="1176" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="1218" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">POST /admin/course/:id/user/:userId/role</text>
+<text x="84" y="1242" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">{ &quot;role&quot;: &quot;teacher&quot; }</text>
+<rect x="70" y="1294" width="280" height="92" rx="18" ry="18" fill="white" stroke="#222" stroke-width="3"/>
+<text x="84" y="1336" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">POST /admin/course/:id/deadline</text>
+<text x="84" y="1360" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">{ &quot;deadline&quot;: &quot;2026-03-10&quot; }</text>
+<line x1="395" y1="66" x2="395" y2="1400" stroke="#111" stroke-width="3"/>
+<text x="450" y="90" font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="#111">сценарии приложения</text>
+<rect x="440" y="160" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="202" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">получить курс</text>
+<text x="454" y="226" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">по ID</text>
+<rect x="440" y="278" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="332" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">получить модули курса</text>
+<rect x="440" y="396" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="438" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">получить прогресс</text>
+<text x="454" y="462" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">по всем курсам</text>
+<rect x="440" y="514" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="568" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">прикрепить материал</text>
+<rect x="440" y="632" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="686" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">опубликовать курс</text>
+<rect x="440" y="750" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="792" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">пригласить пользователя</text>
+<text x="454" y="816" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">в курс</text>
+<rect x="440" y="868" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="922" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">отключить курс</text>
+<rect x="440" y="986" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="1040" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">изменить роль пользователя в курсе</text>
+<rect x="440" y="1104" width="280" height="92" rx="18" ry="18" fill="white" stroke="#d97706" stroke-width="3"/>
+<text x="454" y="1146" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">обновить дедлайн</text>
+<text x="454" y="1170" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">курса</text>
+<line x1="765" y1="66" x2="765" y2="1400" stroke="#111" stroke-width="3"/>
+<text x="820" y="90" font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="#111">контракты доступа</text>
+<text x="820" y="120" font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="#111">к данным и сервисам</text>
+<text x="818" y="180" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#111">БД</text>
+<rect x="810" y="188" width="280" height="92" rx="18" ry="18" fill="white" stroke="#1d4ed8" stroke-width="3"/>
+<text x="824" y="230" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">получить курс</text>
+<text x="824" y="254" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">по ID</text>
+<rect x="810" y="306" width="280" height="92" rx="18" ry="18" fill="white" stroke="#1d4ed8" stroke-width="3"/>
+<text x="824" y="348" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">получить модули</text>
+<text x="824" y="372" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">по ID курса</text>
+<rect x="810" y="424" width="280" height="92" rx="18" ry="18" fill="white" stroke="#1d4ed8" stroke-width="3"/>
+<text x="824" y="466" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">получить прогресс</text>
+<text x="824" y="490" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">по userID</text>
+<rect x="810" y="542" width="280" height="92" rx="18" ry="18" fill="white" stroke="#1d4ed8" stroke-width="3"/>
+<text x="824" y="596" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">сохранить метаданные материала курса</text>
+<rect x="810" y="660" width="280" height="92" rx="18" ry="18" fill="white" stroke="#1d4ed8" stroke-width="3"/>
+<text x="824" y="714" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">обновить статус курса</text>
+<rect x="810" y="778" width="280" height="92" rx="18" ry="18" fill="white" stroke="#1d4ed8" stroke-width="3"/>
+<text x="824" y="832" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">добавить/обновить участие пользователя в курсе</text>
+<rect x="810" y="896" width="280" height="92" rx="18" ry="18" fill="white" stroke="#1d4ed8" stroke-width="3"/>
+<text x="824" y="950" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">обновить дедлайн курса в БД</text>
+<text x="818" y="1050" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#111">Файловое хранилище</text>
+<rect x="810" y="1058" width="280" height="92" rx="18" ry="18" fill="white" stroke="#2563eb" stroke-width="3"/>
+<text x="824" y="1100" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">сохранить файл</text>
+<text x="824" y="1124" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">материала курса</text>
+<text x="818" y="1212" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#111">Сервис календаря</text>
+<rect x="810" y="1220" width="280" height="92" rx="18" ry="18" fill="white" stroke="#0f766e" stroke-width="3"/>
+<text x="824" y="1262" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">обновить событие курса</text>
+<text x="824" y="1286" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#111">в календаре</text>
+<line x1="350" y1="234" x2="440" y2="206" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="868" x2="440" y2="206" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="352" x2="440" y2="324" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="470" x2="440" y2="442" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="588" x2="440" y2="560" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="706" x2="440" y2="678" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="986" x2="440" y2="796" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="1104" x2="440" y2="914" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="1222" x2="440" y2="1032" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="1340" x2="440" y2="1150" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="234" x2="720" y2="206" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="352" x2="720" y2="324" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="470" x2="720" y2="442" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="1104" x2="720" y2="560" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="588" x2="720" y2="560" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="352" x2="720" y2="678" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="706" x2="720" y2="678" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="1266" x2="720" y2="678" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="824" x2="720" y2="796" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="706" x2="720" y2="914" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="824" x2="720" y2="1032" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="942" x2="720" y2="1150" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="1266" x2="720" y2="1150" stroke="#222" stroke-width="2.5" marker-end="url(#arrow)"/>
+</svg>

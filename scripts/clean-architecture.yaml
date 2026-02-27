@@ -1,0 +1,190 @@
+layers:
+  - id: handlers
+    name: обработчики
+    sections:
+      - name: REST API сервер
+        components:
+          - id: handler_rest_get_course
+            label: GET /course/:id
+          - id: handler_rest_get_modules
+            label: GET /course/:id/modules
+          - id: handler_rest_get_progress
+            label: GET /profile/me/progress
+          - id: handler_rest_attach_material
+            label: |
+              POST /course/:id/materials
+              { "fileUrl": "...", "title": "..." }
+          - id: handler_rest_publish_course
+            label: |
+              POST /course/:id/publish
+              { "published": true }
+      - name: HTML панель администратора
+        components:
+          - id: handler_html_course_page
+            label: GET /admin/course/:id
+          - id: handler_html_invite_user
+            label: |
+              POST /admin/course/:id/invite-user
+              { "email": "...", "role": "student" }
+          - id: handler_html_disable_course
+            label: POST /admin/course/:id/disable
+          - id: handler_html_change_user_role
+            label: |
+              POST /admin/course/:id/user/:userId/role
+              { "role": "teacher" }
+          - id: handler_html_update_deadline
+            label: |
+              POST /admin/course/:id/deadline
+              { "deadline": "2026-03-10" }
+
+  - id: usecases
+    name: сценарии приложения
+    components:
+      - id: usecase_get_course_by_id
+        label: |
+          получить курс
+          по ID
+        stroke: "#d97706"
+      - id: usecase_get_course_modules
+        label: получить модули курса
+        stroke: "#d97706"
+      - id: usecase_get_my_progress
+        label: |
+          получить прогресс
+          по всем курсам
+        stroke: "#d97706"
+      - id: usecase_attach_material
+        label: прикрепить материал
+        stroke: "#d97706"
+      - id: usecase_publish_course
+        label: опубликовать курс
+        stroke: "#d97706"
+      - id: usecase_invite_user_to_course
+        label: |
+          пригласить пользователя
+          в курс
+        stroke: "#d97706"
+      - id: usecase_disable_course
+        label: отключить курс
+        stroke: "#d97706"
+      - id: usecase_change_user_role
+        label: изменить роль пользователя в курсе
+        stroke: "#d97706"
+      - id: usecase_update_course_deadline
+        label: |
+          обновить дедлайн
+          курса
+        stroke: "#d97706"
+
+  - id: ports
+    name: |
+      контракты доступа
+      к данным и сервисам
+    sections:
+      - name: БД
+        components:
+          - id: port_get_course_by_id
+            label: |
+              получить курс
+              по ID
+            stroke: "#1d4ed8"
+          - id: port_list_modules_by_course
+            label: |
+              получить модули
+              по ID курса
+            stroke: "#1d4ed8"
+          - id: port_get_progress_by_user
+            label: |
+              получить прогресс
+              по userID
+            stroke: "#1d4ed8"
+          - id: port_save_course_material_metadata
+            label: сохранить метаданные материала курса
+            stroke: "#1d4ed8"
+          - id: port_update_course_status
+            label: обновить статус курса
+            stroke: "#1d4ed8"
+          - id: port_upsert_course_membership
+            label: добавить/обновить участие пользователя в курсе
+            stroke: "#1d4ed8"
+          - id: port_update_course_deadline_db
+            label: обновить дедлайн курса в БД
+            stroke: "#1d4ed8"
+      - name: Файловое хранилище
+        components:
+          - id: port_store_course_material_file
+            label: |
+              сохранить файл
+              материала курса
+            stroke: "#2563eb"
+      - name: Сервис календаря
+        components:
+          - id: port_sync_course_calendar_event
+            label: |
+              обновить событие курса
+              в календаре
+            stroke: "#0f766e"
+
+connections:
+  - from: handler_rest_get_course
+    to: usecase_get_course_by_id
+  - from: handler_html_course_page
+    to: usecase_get_course_by_id
+
+  - from: handler_rest_get_modules
+    to: usecase_get_course_modules
+
+  - from: handler_rest_get_progress
+    to: usecase_get_my_progress
+
+  - from: handler_rest_attach_material
+    to: usecase_attach_material
+
+  - from: handler_rest_publish_course
+    to: usecase_publish_course
+
+  - from: handler_html_invite_user
+    to: usecase_invite_user_to_course
+  - from: handler_html_disable_course
+    to: usecase_disable_course
+  - from: handler_html_change_user_role
+    to: usecase_change_user_role
+  - from: handler_html_update_deadline
+    to: usecase_update_course_deadline
+
+  - from: usecase_get_course_by_id
+    to: port_get_course_by_id
+
+  - from: usecase_get_course_modules
+    to: port_list_modules_by_course
+
+  - from: usecase_get_my_progress
+    to: port_get_progress_by_user
+
+  - from: usecase_attach_material
+    to: port_store_course_material_file
+  - from: usecase_attach_material
+    to: port_save_course_material_metadata
+
+  - from: usecase_publish_course
+    to: port_list_modules_by_course
+  - from: usecase_publish_course
+    to: port_update_course_status
+  - from: usecase_publish_course
+    to: port_sync_course_calendar_event
+
+  - from: usecase_invite_user_to_course
+    to: port_upsert_course_membership
+
+  - from: usecase_disable_course
+    to: port_update_course_status
+
+  - from: usecase_change_user_role
+    to: port_upsert_course_membership
+
+  - from: usecase_update_course_deadline
+    to: port_update_course_deadline_db
+  - from: usecase_update_course_deadline
+    to: port_sync_course_calendar_event
+
+note: ""
