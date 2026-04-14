@@ -1261,6 +1261,94 @@ type BloomFilter interface {
 === Полная структура LSM-дерева
 LSM-дерево — это конвейер для больших объёмов данных, где запись идёт быстро, а порядок поддерживается фоновыми слияниями.
 
+#figure(
+  kind: "diagram",
+  supplement: [Схема],
+  align(center)[
+    #set text(size: 9pt)
+    #let box-mem = block.with(fill: luma(238), stroke: 0.6pt, inset: 6pt, radius: 3pt)
+    #let box-disk = block.with(stroke: 0.6pt, inset: 6pt, radius: 3pt)
+
+    #block(stroke: 0.5pt, inset: 10pt, radius: 4pt, width: 96%)[
+
+      // Направления
+      #align(center)[
+        *Клиент* #h(2em) #text(size: 8pt)[запись ↓ #h(1.5em) ↑ чтение (от свежих к старым)]
+      ]
+      #v(0.3em)
+      #line(length: 100%, stroke: 0.4pt + luma(180))
+      #v(0.4em)
+
+      // Слой памяти
+      #box-mem(width: 100%)[
+        #text(weight: "bold")[Память]
+        #v(0.3em)
+        #grid(
+          columns: (1fr, 0.2fr, 1fr),
+          gutter: 0em,
+          align: (center, center, center),
+          box-disk(width: 100%)[
+            *WAL* \
+            #text(size: 8pt)[append-only на диск \ защита от сбоя]
+          ],
+          align(horizon)[+],
+          box-disk(width: 100%)[
+            *Memtable* \
+            #text(size: 8pt)[skip-list в памяти \ быстрые вставки и поиск]
+          ],
+        )
+      ]
+
+      #v(0.25em)
+      #align(center)[#text(size: 8pt)[↓ при переполнении: Memtable замораживается → Immutable Memtable → flush на диск]]
+      #v(0.25em)
+
+      // L0
+      #box-disk(width: 100%)[
+        #grid(
+          columns: (auto, 1fr),
+          gutter: 0.5em,
+          align: (left, left),
+          text(weight: "bold")[Диск — L0],
+          text(size: 8pt)[(новые файлы, диапазоны ключей могут перекрываться)],
+        )
+        #v(0.3em)
+        #grid(
+          columns: (1fr, 1fr, 1fr),
+          gutter: 0.4em,
+          box-mem(width: 100%)[SSTable \ #text(size: 8pt)[Bloom Filter]],
+          box-mem(width: 100%)[SSTable \ #text(size: 8pt)[Bloom Filter]],
+          box-mem(width: 100%)[SSTable \ #text(size: 8pt)[Bloom Filter]],
+        )
+      ]
+
+      #v(0.25em)
+      #align(center)[#text(size: 8pt)[↓ compaction: слияние, дедупликация, выброс tombstone-записей]]
+      #v(0.25em)
+
+      // L1+
+      #box-disk(width: 100%)[
+        #grid(
+          columns: (auto, 1fr),
+          gutter: 0.5em,
+          align: (left, left),
+          text(weight: "bold")[Диск — L1, L2, ...],
+          text(size: 8pt)[(крупнее, диапазоны не перекрываются внутри уровня)],
+        )
+        #v(0.3em)
+        #grid(
+          columns: (1fr, 1fr),
+          gutter: 0.4em,
+          box-mem(width: 100%)[Merged SSTable (L1) \ #text(size: 8pt)[Bloom Filter]],
+          box-mem(width: 100%)[Merged SSTable (L2+) \ #text(size: 8pt)[Bloom Filter]],
+        )
+      ]
+
+    ]
+  ],
+  caption: [Конвейер LSM: запись вниз через уровни, чтение проверяет с верхних],
+)
+
 Основные части:
 1. WAL — журнал для надёжности: каждый запрос записи сначала фиксируется последовательно.
 2. Memtable — быстрая запись и сортировка в памяти.
@@ -1307,7 +1395,20 @@ LSM-дерево — это конвейер для больших объёмо�
 - Key-Value хранилища (конфиги, сессии, кеш с долговременной персистентностью)
 - Большие базы, где критична скорость записи и последовательное чтение
 
-Типичные системы на этой идее: LevelDB/RocksDB, Cassandra, HBase, Bigtable.
+Типичные системы на этой идее:
+
+#table(
+  columns: (auto, 1fr),
+  stroke: 0.5pt,
+  align: (left, left),
+  [*Система*], [*Зачем LSM*],
+
+  [RocksDB / LevelDB], [базовый KV-движок от Google/Meta, встраивается в десятки систем],
+  [Cassandra], [write-heavy нагрузки, time-series, распределённые логи],
+  [HBase], [Hadoop-экосистема, аналитика поверх HDFS],
+  [Google Bigtable], [семинальная система, откуда LSM пошёл в prod],
+  [InfluxDB], [time-series: постоянный поток метрик, редкие обновления],
+)
 
 #pagebreak()
 == #new-lecture("B-дерево: индексирование на диске") <b-tree-index>
